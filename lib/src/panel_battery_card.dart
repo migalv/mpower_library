@@ -1,24 +1,30 @@
+import 'dart:async';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:cons_calc_lib/src/instructions_card.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
+List panels, batteries, products;
+
 class PanelBatteryCard extends StatelessWidget {
-  final List allPanels, allBatteries, products;
-  final Map panels, batteries;
+  final List allPanels, allBatteries;
   final Color color;
   final Function addProduct,
       isSelected,
       addPanel,
       addBattery,
       removePanel,
-      removeBattery;
+      removeBattery,
+      addProductUnits,
+      removeLastUnit;
+  final Stream panelStream, batteryStream, productStream;
 
   PanelBatteryCard({
-    @required this.panels,
-    @required this.batteries,
-    @required this.products,
+    @required this.panelStream,
+    @required this.batteryStream,
+    @required this.productStream,
     @required this.allPanels,
     @required this.allBatteries,
     @required this.color,
@@ -28,20 +34,39 @@ class PanelBatteryCard extends StatelessWidget {
     @required this.addBattery,
     @required this.removePanel,
     @required this.removeBattery,
+    @required this.addProductUnits,
+    @required this.removeLastUnit,
   });
 
   @override
-  Widget build(BuildContext context) => Card(
-        margin: const EdgeInsets.symmetric(vertical: 12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _firstSection(context),
-            Divider(height: 1),
-            Container(height: 24),
-            _secondSection(context),
-          ],
+  Widget build(BuildContext context) => StreamBuilder(
+        stream: productStream,
+        builder: (BuildContext context, AsyncSnapshot productSnapshot) =>
+            StreamBuilder(
+          stream: batteryStream,
+          builder: (BuildContext context, AsyncSnapshot batterySnapshot) =>
+              StreamBuilder(
+            stream: panelStream,
+            builder: (context, panelSnapshot) {
+              panels = panelSnapshot.data?.values?.toList() ?? [];
+              batteries = batterySnapshot.data?.values?.toList() ?? [];
+              products = productSnapshot.data ?? [];
+
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    _firstSection(context),
+                    Divider(height: 1),
+                    Container(height: 24),
+                    _secondSection(context),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       );
 
@@ -56,7 +81,7 @@ class PanelBatteryCard extends StatelessWidget {
                   flex: 6,
                   child: _bundleProduct(
                     'PANEL${panels.length > 1 ? 'S' : ''}',
-                    panels.values.map((unit) => unit.panel).toList(),
+                    panels.map((unit) => unit.panel).toList(),
                     context,
                     isPanel: true,
                   ),
@@ -74,7 +99,7 @@ class PanelBatteryCard extends StatelessWidget {
                   flex: 6,
                   child: _bundleProduct(
                     'BATTER${batteries.length > 1 ? 'IES' : 'Y'}',
-                    batteries.values.map((unit) => unit.battery).toList(),
+                    batteries.map((unit) => unit.battery).toList(),
                     context,
                   ),
                 ),
@@ -287,7 +312,7 @@ class PanelBatteryCard extends StatelessWidget {
                     margin: EdgeInsets.only(top: 8.0),
                     padding: EdgeInsets.all(4.0),
                     width: double.infinity,
-                    decoration: new BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.all(Radius.circular(4.0)),
                     ),
@@ -410,7 +435,7 @@ class PanelBatteryCard extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: Icon(Icons.edit),
-          onPressed: () => _editProductCount(context, product),
+          onPressed: () => _editProductCount(context, product.id),
         ),
       );
 
@@ -575,117 +600,118 @@ class PanelBatteryCard extends StatelessWidget {
             width: 0.0,
           ),
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                IconButton(
-                  icon: Icon(
-                    Icons.remove,
-                    size: 18,
+            StreamBuilder(
+              stream: (isPanel ? panelStream : batteryStream)
+                  .map((p) => p[product.id]),
+              builder: (context, snapshot) => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(
+                      Icons.remove,
+                      size: 18,
+                    ),
+                    onPressed: () => isPanel
+                        ? removePanel(product.id, units: 1)
+                        : removeBattery(product.id, units: 1),
                   ),
-                  onPressed: () => isPanel
-                      ? removePanel(product.id, units: 1)
-                      : removeBattery(product.id, units: 1),
-                ),
-                Text(
-                  ((isPanel ? panels : batteries) ?? {})[product.id]
-                          ?.units
-                          ?.toString() ??
-                      '0',
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.add,
-                    size: 18,
+                  Text(
+                    snapshot.data?.units?.toString() ?? '0',
                   ),
-                  onPressed: () =>
-                      isPanel ? addPanel(product) : addBattery(product),
-                ),
-                Text(
-                  'Units',
-                  style: Theme.of(context).textTheme.subtitle2,
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                  IconButton(
+                    icon: Icon(
+                      Icons.add,
+                      size: 18,
+                    ),
+                    onPressed: () =>
+                        isPanel ? addPanel(product) : addBattery(product),
+                  ),
+                  Text(
+                    'Units',
+                    style: Theme.of(context).textTheme.subtitle2,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             )
           ],
         ),
       );
 
   // METHODS
-  void _editProductCount(BuildContext context, product) => showDialog(
+  void _editProductCount(BuildContext context, productId) => showDialog(
         context: context,
         child: AlertDialog(
           title: Text('Select the quantity'),
-          // TODO
-          // content: StreamBuilder<ConsumptionProduct>(
-          //   stream: bloc.products
-          //       .transform(SingleWhereStreamTransformer(id: product.id)),
-          //   builder: (context, snapshot) {
-          //     return Column(
-          //       mainAxisSize: MainAxisSize.min,
-          //       children: <Widget>[
-          //         ListTile(
-          //           contentPadding: const EdgeInsets.all(0.0),
-          //           leading: (product.imageUrl?.isEmpty ?? true)
-          //               ? CircleAvatar(
-          //                   backgroundColor: Colors.black12,
-          //                   child: Icon(
-          //                     MdiIcons.tag,
-          //                     color: Colors.black38,
-          //                     size: 20,
-          //                   ),
-          //                 )
-          //               : CircularProfileAvatar(product.imageUrl,
-          //                   cacheImage: true,
-          //                   errorWidget: (_, __, ___) => CircleAvatar(
-          //                         backgroundColor: Colors.black12,
-          //                         child: Icon(
-          //                           MdiIcons.tag,
-          //                           color: Colors.black38,
-          //                           size: 20,
-          //                         ),
-          //                       )),
-          //           title: Text(
-          //             product.name,
-          //             maxLines: 2,
-          //             overflow: TextOverflow.ellipsis,
-          //           ),
-          //           subtitle: Text(
-          //             '${snapshot.data?.subProducts?.length ?? 1} ' +
-          //                 translations.translate(
-          //                     'unit${(snapshot.data?.subProducts?.length ?? 1) > 1 ? 's' : ''}'),
-          //           ),
-          //         ),
-          //         Row(
-          //           children: <Widget>[
-          //             IconButton(
-          //               icon: Icon(
-          //                 Icons.remove,
-          //                 size: 18,
-          //               ),
-          //               onPressed: () {
-          //                 bool noRemaining = bloc.removeLastUnit(product.id);
-          //                 if (noRemaining) Navigator.pop(context);
-          //               },
-          //             ),
-          //             Text(
-          //               snapshot.data?.subProducts?.length?.toString() ?? '1',
-          //             ),
-          //             IconButton(
-          //               icon: Icon(
-          //                 Icons.add,
-          //                 size: 18,
-          //               ),
-          //               onPressed: () =>
-          //                   bloc.addProduct(consumptionProduct: product),
-          //             ),
-          //           ],
-          //         )
-          //       ],
-          //     );
-          //   },
-          // ),
+          content: StreamBuilder(
+              stream: productStream,
+              builder: (context, snapshot) {
+                if (snapshot.data?.isEmpty ?? true) return Container();
+
+                var product =
+                    snapshot.data.singleWhere((p) => p.id == productId);
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ListTile(
+                      contentPadding: const EdgeInsets.all(0.0),
+                      leading: (product.imageUrl?.isEmpty ?? true)
+                          ? CircleAvatar(
+                              backgroundColor: Colors.black12,
+                              child: Icon(
+                                MdiIcons.tag,
+                                color: Colors.black38,
+                                size: 20,
+                              ),
+                            )
+                          : CircularProfileAvatar(product.imageUrl,
+                              cacheImage: true,
+                              errorWidget: (_, __, ___) => CircleAvatar(
+                                    backgroundColor: Colors.black12,
+                                    child: Icon(
+                                      MdiIcons.tag,
+                                      color: Colors.black38,
+                                      size: 20,
+                                    ),
+                                  )),
+                      title: Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        '${product.subProducts?.length ?? 1} unit${(product.subProducts?.length ?? 1) > 1 ? 's' : ''}',
+                      ),
+                    ),
+                    Row(
+                      children: <Widget>[
+                        IconButton(
+                          icon: Icon(
+                            Icons.remove,
+                            size: 18,
+                          ),
+                          onPressed: () {
+                            bool noRemaining = removeLastUnit(product.id);
+                            if (noRemaining) Navigator.pop(context);
+                          },
+                        ),
+                        Text(
+                          product.subProducts?.length?.toString() ?? '1',
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.add,
+                            size: 18,
+                          ),
+                          onPressed: () =>
+                              addProductUnits(consumptionProduct: product),
+                        ),
+                      ],
+                    )
+                  ],
+                );
+              }),
           actions: <Widget>[
             FlatButton(
               child: Text('ACCEPT'),

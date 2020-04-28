@@ -589,7 +589,7 @@ class PanelBatteryCard extends StatelessWidget {
                 ),
                 Text(
                   ((isPanel ? panels : batteries) ?? {})[product.id]
-                          .units
+                          ?.units
                           ?.toString() ??
                       '0',
                 ),

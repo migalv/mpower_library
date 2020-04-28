@@ -16,7 +16,7 @@ class InstructionsCard extends StatelessWidget {
         ),
         child: Text(
           instructions,
-          style: Theme.of(context).textTheme.body2,
+          style: Theme.of(context).textTheme.bodyText1,
         ),
       );
 }

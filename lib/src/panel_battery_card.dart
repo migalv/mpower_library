@@ -5,16 +5,29 @@ import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class PanelBatteryCard extends StatelessWidget {
-  final List panels;
-  final List batteries;
-  final List products;
+  final List allPanels, allBatteries, products;
+  final Map panels, batteries;
   final Color color;
+  final Function addProduct,
+      isSelected,
+      addPanel,
+      addBattery,
+      removePanel,
+      removeBattery;
 
   PanelBatteryCard({
     @required this.panels,
     @required this.batteries,
     @required this.products,
+    @required this.allPanels,
+    @required this.allBatteries,
     @required this.color,
+    @required this.addProduct,
+    @required this.isSelected,
+    @required this.addPanel,
+    @required this.addBattery,
+    @required this.removePanel,
+    @required this.removeBattery,
   });
 
   @override
@@ -43,7 +56,7 @@ class PanelBatteryCard extends StatelessWidget {
                   flex: 6,
                   child: _bundleProduct(
                     'PANEL${panels.length > 1 ? 'S' : ''}',
-                    panels.map((unit) => unit.panel).toList(),
+                    panels.values.map((unit) => unit.panel).toList(),
                     context,
                     isPanel: true,
                   ),
@@ -61,7 +74,7 @@ class PanelBatteryCard extends StatelessWidget {
                   flex: 6,
                   child: _bundleProduct(
                     'BATTER${batteries.length > 1 ? 'IES' : 'Y'}',
-                    batteries.map((unit) => unit.battery).toList(),
+                    batteries.values.map((unit) => unit.battery).toList(),
                     context,
                   ),
                 ),
@@ -248,7 +261,7 @@ class PanelBatteryCard extends StatelessWidget {
           children: <Widget>[
             Text(
               'Panel${panels.length > 1 ? 's' : ''}',
-              style: Theme.of(context).textTheme.subtitle,
+              style: Theme.of(context).textTheme.subtitle2,
             ),
             panels.isNotEmpty
                 ? Container(
@@ -267,7 +280,7 @@ class PanelBatteryCard extends StatelessWidget {
             SizedBox(height: 8.0),
             Text(
               'Batter${batteries.length > 1 ? 'ies' : 'y'}',
-              style: Theme.of(context).textTheme.subtitle,
+              style: Theme.of(context).textTheme.subtitle2,
             ),
             batteries.isNotEmpty
                 ? Container(
@@ -298,7 +311,7 @@ class PanelBatteryCard extends StatelessWidget {
                   '•  ' + (isPanel ? unit.panel.name : unit.battery.name),
                   style: Theme.of(context)
                       .textTheme
-                      .body2
+                      .bodyText1
                       .copyWith(color: Colors.black87),
                 ),
                 trailing: Padding(
@@ -326,7 +339,7 @@ class PanelBatteryCard extends StatelessWidget {
               padding: const EdgeInsets.only(left: 24.0),
               child: Text(
                 'Products',
-                style: Theme.of(context).textTheme.subhead,
+                style: Theme.of(context).textTheme.subtitle1,
               ),
             ),
             products.isNotEmpty
@@ -343,19 +356,7 @@ class PanelBatteryCard extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: OutlineButton.icon(
-                  // onPressed: () async {
-                  //   Map<String, dynamic> selectedLoad = await utils.push(
-                  //     context,
-                  //     BlocProvider<LoadListBloc>(
-                  //       initBloc: (_, bloc) =>
-                  //           bloc ?? LoadListBloc(productType: ProductType.LOAD),
-                  //       onDispose: (_, bloc) => bloc.dispose(),
-                  //       child: LoadListPage(),
-                  //     ),
-                  //   );
-                  //   if (selectedLoad != null)
-                  //     bloc.addProduct(productMap: selectedLoad);
-                  // },
+                  onPressed: addProduct,
                   icon: Icon(Icons.add, color: color),
                   label: Text(
                     'ADD PRODUCT',
@@ -464,7 +465,7 @@ class PanelBatteryCard extends StatelessWidget {
             ),
             AutoSizeText(
               'Add products to start calculating',
-              style: Theme.of(context).textTheme.subhead.copyWith(
+              style: Theme.of(context).textTheme.subtitle1.copyWith(
                     fontSize: 24.0,
                     color: Color(0x99000000),
                   ),
@@ -500,7 +501,7 @@ class PanelBatteryCard extends StatelessWidget {
   void _showSelectionDialog(BuildContext context, bool isPanel) => showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          contentPadding: const EdgeInsets.all(0.0),
+          contentPadding: EdgeInsets.all(0.0),
           title: Text(
             'Add ${isPanel ? 'panels' : 'batteries'}',
           ),
@@ -510,139 +511,106 @@ class PanelBatteryCard extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
           ],
-          // TODO Pasar todos los productos (?)
-          // content: StreamBuilder<List<Product>>(
-          //   stream: repository.allProducts,
-          //   builder: (context, snapshot) {
-          //     if (snapshot.data?.isEmpty ?? true) return Container();
-          //     // The selection function to use depending if it is panel or battery
-          //     Function(String) isSelectedFunc =
-          //         isPanel ? bloc.isPanelSelected : bloc.isBatterySelected;
-
-          //     List<Product> products = snapshot.data
-          //         .where(
-          //           (product) =>
-          //               product.type ==
-          //               (isPanel ? ProductType.PANEL : ProductType.BATTERY),
-          //         )
-          //         .toList();
-
-          //     // Order the products by selected first
-          //     products.sort((p1, p2) => (isSelectedFunc(p1.id) ? 0 : 1)
-          //         .compareTo(isSelectedFunc(p2.id) ? 0 : 1));
-
-          //     return Container(
-          //       width: double.maxFinite,
-          //       child: ListView(
-          //         shrinkWrap: true,
-          //         padding: const EdgeInsets.symmetric(
-          //             horizontal: 24.0, vertical: 16.0),
-          //         children: products.map(
-          //           (product) {
-          //             bool selected = isSelectedFunc(product.id);
-
-          //             return _buildExpansionTile(
-          //                 context, translations, product, bloc,
-          //                 isPanel: isPanel, isSelected: selected);
-          //           },
-          //         ).toList(),
-          //       ),
-          //     );
-          //   },
-          // ),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              children: (isPanel ? allPanels : allBatteries)
+                  .map(
+                    (product) => _buildExpansionTile(
+                      context,
+                      product,
+                      isPanel: isPanel,
+                      isSelected: isSelected(product),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
         ),
       );
 
   Widget _buildExpansionTile(BuildContext context, product,
-      {bool isPanel = false, bool isSelected = false}) {
-    Key tileKey = GlobalKey();
-
-    return ListTileTheme(
-      contentPadding: const EdgeInsets.all(0.0),
-      child: ExpansionTile(
-        key: tileKey,
-        title: Text(
-          product.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(product.sku),
-        // TODO Product expansion
-        // onExpansionChanged: (isExpanding) {
-        //   if (isExpanding)
-        //     isPanel ? bloc.addPanel(product) : bloc.addBattery(product);
-        //   else
-        //     isPanel
-        //         ? bloc.removePanel(product.id)
-        //         : bloc.removeBattery(product.id);
-        // },
-        initiallyExpanded: isSelected,
-        leading: (product.imageURL?.isEmpty ?? true)
-            ? CircleAvatar(
-                backgroundColor: Colors.black12,
-                child: Icon(
-                  isPanel ? Icons.grid_on : Icons.battery_full,
-                  size: 20,
-                  color: Colors.black38,
+          {bool isPanel = false, bool isSelected = false}) =>
+      ListTileTheme(
+        contentPadding: const EdgeInsets.all(0.0),
+        child: ExpansionTile(
+          key: GlobalKey(),
+          title: Text(
+            product.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(product.sku),
+          onExpansionChanged: (isExpanding) {
+            if (isExpanding)
+              isPanel ? addPanel(product) : addBattery(product);
+            else
+              isPanel ? removePanel(product.id) : removeBattery(product.id);
+          },
+          initiallyExpanded: isSelected,
+          leading: (product.imageURL?.isEmpty ?? true)
+              ? CircleAvatar(
+                  backgroundColor: Colors.black12,
+                  child: Icon(
+                    isPanel ? Icons.grid_on : Icons.battery_full,
+                    size: 20,
+                    color: Colors.black38,
+                  ),
+                )
+              : CircularProfileAvatar(product.imageURL,
+                  radius: 20,
+                  cacheImage: true,
+                  errorWidget: (_, __, ___) => CircleAvatar(
+                        backgroundColor: Colors.black12,
+                        child: Icon(
+                          isPanel ? Icons.grid_on : Icons.battery_full,
+                          size: 20,
+                          color: Colors.black38,
+                        ),
+                      )),
+          trailing: Container(
+            height: 0.0,
+            width: 0.0,
+          ),
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.remove,
+                    size: 18,
+                  ),
+                  onPressed: () => isPanel
+                      ? removePanel(product.id, units: 1)
+                      : removeBattery(product.id, units: 1),
                 ),
-              )
-            : CircularProfileAvatar(product.imageURL,
-                radius: 20,
-                cacheImage: true,
-                errorWidget: (_, __, ___) => CircleAvatar(
-                      backgroundColor: Colors.black12,
-                      child: Icon(
-                        isPanel ? Icons.grid_on : Icons.battery_full,
-                        size: 20,
-                        color: Colors.black38,
-                      ),
-                    )),
-        trailing: Container(
-          height: 0.0,
-          width: 0.0,
+                Text(
+                  ((isPanel ? panels : batteries) ?? {})[product.id]
+                          .units
+                          ?.toString() ??
+                      '0',
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.add,
+                    size: 18,
+                  ),
+                  onPressed: () =>
+                      isPanel ? addPanel(product) : addBattery(product),
+                ),
+                Text(
+                  'Units',
+                  style: Theme.of(context).textTheme.subtitle2,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            )
+          ],
         ),
-        children: <Widget>[
-          // TODO
-          // StreamBuilder(
-          //   stream: (isPanel ? bloc.panels : bloc.batteries)
-          //       .map((map) => map[product.id]),
-          //   builder: (context, snapshot) {
-          //     return Row(
-          //       mainAxisAlignment: MainAxisAlignment.center,
-          //       children: <Widget>[
-          //         IconButton(
-          //             icon: Icon(
-          //               Icons.remove,
-          //               size: 18,
-          //             ),
-          //             onPressed: () => isPanel
-          //                 ? bloc.removePanel(product.id, units: 1)
-          //                 : bloc.removeBattery(product.id, units: 1)),
-          //         Text(
-          //           snapshot?.data?.units?.toString() ?? '0',
-          //         ),
-          //         IconButton(
-          //           icon: Icon(
-          //             Icons.add,
-          //             size: 18,
-          //           ),
-          //           onPressed: () => isPanel
-          //               ? bloc.addPanel(product)
-          //               : bloc.addBattery(product),
-          //         ),
-          //         Text(
-          //           'Units',
-          //           style: Theme.of(context).textTheme.subtitle,
-          //           textAlign: TextAlign.center,
-          //         ),
-          //       ],
-          //     );
-          //   },
-          // ),
-        ],
-      ),
-    );
-  }
+      );
 
   // METHODS
   void _editProductCount(BuildContext context, product) => showDialog(

@@ -10,4 +10,5 @@ export './src/load_category_bloc.dart';
 export './src/load_category_page.dart';
 export './src/load_list_page.dart';
 export './src/panel_battery_card.dart';
+export './src/power_card.dart';
 export './src/theme.dart';

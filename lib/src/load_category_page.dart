@@ -107,7 +107,7 @@ class _LoadCategoryPageState extends State<LoadCategoryPage> {
                             _loadCategoryBloc.category.name,
                             style: Theme.of(context)
                                 .textTheme
-                                .title
+                                .headline6
                                 .copyWith(fontSize: 20.0),
                           ),
                         ],
@@ -144,7 +144,7 @@ class _LoadCategoryPageState extends State<LoadCategoryPage> {
                         _loadCategoryBloc.category.name,
                         style: Theme.of(context)
                             .textTheme
-                            .headline
+                            .headline5
                             .copyWith(fontSize: 32.0),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -220,19 +220,19 @@ class _LoadCategoryPageState extends State<LoadCategoryPage> {
         ),
         title: Text(
           product.name['en'],
-          style: Theme.of(context).textTheme.title.copyWith(fontSize: 20.0),
+          style: Theme.of(context).textTheme.headline6.copyWith(fontSize: 20.0),
         ),
         subtitle: Row(
           children: <Widget>[
             Text(
               'Estimated consumption: ',
-              style: Theme.of(context).textTheme.subtitle,
+              style: Theme.of(context).textTheme.subtitle2,
             ),
             Text(
               "${numberFormat.format(product.consumption)}Wh",
               style: Theme.of(context)
                   .textTheme
-                  .subtitle
+                  .subtitle2
                   .copyWith(fontWeight: FontWeight.bold),
             ),
           ],

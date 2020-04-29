@@ -173,7 +173,7 @@ class _LoadListPageState extends State<LoadListPage> {
                     4.0),
                 child: Text(
                   product.name,
-                  style: Theme.of(context).textTheme.title,
+                  style: Theme.of(context).textTheme.headline6,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -216,7 +216,7 @@ class _LoadListPageState extends State<LoadListPage> {
           children: <Widget>[
             Text(
               'Consumption',
-              style: Theme.of(context).textTheme.subtitle,
+              style: Theme.of(context).textTheme.subtitle2,
               textAlign: TextAlign.center,
             ),
             Text(
@@ -224,7 +224,7 @@ class _LoadListPageState extends State<LoadListPage> {
                   "Wh",
               style: Theme.of(context)
                   .textTheme
-                  .subtitle
+                  .subtitle2
                   .copyWith(fontWeight: FontWeight.bold),
             ),
           ],
@@ -283,7 +283,7 @@ class _LoadListPageState extends State<LoadListPage> {
                       tag: category.id + "name",
                       child: Text(
                         category.name,
-                        style: Theme.of(context).textTheme.title,
+                        style: Theme.of(context).textTheme.headline6,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

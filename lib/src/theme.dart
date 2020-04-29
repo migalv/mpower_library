@@ -67,49 +67,49 @@ ChipThemeData _buildMPowerChipTheme() {
 
 TextTheme _buildMPowerTextTheme(TextTheme base) {
   return base.copyWith(
-    display1: base.display1.copyWith(
+    headline4: base.headline4.copyWith(
       fontFamily: 'GoogleSans',
       fontWeight: FontWeight.w700,
       fontSize: 99.45,
       letterSpacing: -1.5,
     ),
-    display2: base.display2.copyWith(
+    headline3: base.headline3.copyWith(
       fontFamily: 'GoogleSans',
       fontWeight: FontWeight.w700,
       fontSize: 62.12,
       letterSpacing: -0.5,
     ),
-    display3: base.display3.copyWith(
+    headline2: base.headline2.copyWith(
       fontFamily: 'LibreFranklin',
       fontWeight: FontWeight.w500,
       fontSize: 47.85,
       letterSpacing: 0,
     ),
-    display4: base.display4.copyWith(
+    headline1: base.headline1.copyWith(
         fontFamily: 'GoogleSans',
         fontWeight: FontWeight.w700,
         fontSize: 35.22,
         letterSpacing: 0.25,
         color: black60),
-    headline: base.headline.copyWith(
+    headline5: base.headline5.copyWith(
       fontFamily: 'LibreFranklin',
       fontWeight: FontWeight.w500,
       fontSize: 23.92,
       letterSpacing: 0,
     ),
-    title: base.title.copyWith(
+    headline6: base.headline6.copyWith(
         fontFamily: 'LibreFranklin',
         fontWeight: FontWeight.w500,
         fontSize: 17.94,
         letterSpacing: 0.15,
         color: Colors.black87),
-    body1: base.body1.copyWith(
+    bodyText2: base.bodyText2.copyWith(
         fontFamily: 'GoogleSans',
         fontWeight: FontWeight.w400,
         fontSize: 15.95,
         letterSpacing: 0.5,
         color: Colors.black87),
-    body2: base.body2.copyWith(
+    bodyText1: base.bodyText1.copyWith(
         fontFamily: 'LibreFranklin',
         fontWeight: FontWeight.w400,
         fontSize: 13.96,
@@ -134,13 +134,13 @@ TextTheme _buildMPowerTextTheme(TextTheme base) {
         fontSize: 11.96,
         letterSpacing: 2,
         color: black60),
-    subhead: base.subhead.copyWith(
+    subtitle1: base.subtitle1.copyWith(
         fontFamily: 'LibreFranklin',
         fontWeight: FontWeight.w600,
         fontSize: 15.95,
         letterSpacing: 0.15,
         color: Colors.black87),
-    subtitle: base.subtitle.copyWith(
+    subtitle2: base.subtitle2.copyWith(
         fontFamily: 'GoogleSans',
         fontWeight: FontWeight.w400,
         fontSize: 14.5,

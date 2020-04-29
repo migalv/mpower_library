@@ -6,7 +6,7 @@ import 'package:cons_calc_lib/src/instructions_card.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-List panels, batteries, products;
+List _panels, _batteries, _products;
 
 class PanelBatteryCard extends StatelessWidget {
   final List allPanels, allBatteries;
@@ -48,9 +48,9 @@ class PanelBatteryCard extends StatelessWidget {
               StreamBuilder(
             stream: panelStream,
             builder: (context, panelSnapshot) {
-              panels = panelSnapshot.data?.values?.toList() ?? [];
-              batteries = batterySnapshot.data?.values?.toList() ?? [];
-              products = productSnapshot.data ?? [];
+              _panels = panelSnapshot.data?.values?.toList() ?? [];
+              _batteries = batterySnapshot.data?.values?.toList() ?? [];
+              _products = productSnapshot.data ?? [];
 
               return Card(
                 margin: EdgeInsets.symmetric(vertical: 12.0),
@@ -80,8 +80,8 @@ class PanelBatteryCard extends StatelessWidget {
                 Flexible(
                   flex: 6,
                   child: _bundleProduct(
-                    'PANEL${panels.length > 1 ? 'S' : ''}',
-                    panels.map((unit) => unit.panel).toList(),
+                    'PANEL${_panels.length > 1 ? 'S' : ''}',
+                    _panels.map((unit) => unit.panel).toList(),
                     context,
                     isPanel: true,
                   ),
@@ -98,8 +98,8 @@ class PanelBatteryCard extends StatelessWidget {
                 Flexible(
                   flex: 6,
                   child: _bundleProduct(
-                    'BATTER${batteries.length > 1 ? 'IES' : 'Y'}',
-                    batteries.map((unit) => unit.battery).toList(),
+                    'BATTER${_batteries.length > 1 ? 'IES' : 'Y'}',
+                    _batteries.map((unit) => unit.battery).toList(),
                     context,
                   ),
                 ),
@@ -285,10 +285,10 @@ class PanelBatteryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Panel${panels.length > 1 ? 's' : ''}',
+              'Panel${_panels.length > 1 ? 's' : ''}',
               style: Theme.of(context).textTheme.subtitle2,
             ),
-            panels.isNotEmpty
+            _panels.isNotEmpty
                 ? Container(
                     margin: EdgeInsets.only(top: 8.0),
                     padding: EdgeInsets.all(4.0),
@@ -297,17 +297,17 @@ class PanelBatteryCard extends StatelessWidget {
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.all(Radius.circular(4.0)),
                     ),
-                    child: _buildPanelBatteryRows(panels, true, context),
+                    child: _buildPanelBatteryRows(_panels, true, context),
                   )
                 : InstructionsCard(
                     instructions: "Select a panel to start calculating",
                   ),
             SizedBox(height: 8.0),
             Text(
-              'Batter${batteries.length > 1 ? 'ies' : 'y'}',
+              'Batter${_batteries.length > 1 ? 'ies' : 'y'}',
               style: Theme.of(context).textTheme.subtitle2,
             ),
-            batteries.isNotEmpty
+            _batteries.isNotEmpty
                 ? Container(
                     margin: EdgeInsets.only(top: 8.0),
                     padding: EdgeInsets.all(4.0),
@@ -316,7 +316,7 @@ class PanelBatteryCard extends StatelessWidget {
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.all(Radius.circular(4.0)),
                     ),
-                    child: _buildPanelBatteryRows(batteries, false, context),
+                    child: _buildPanelBatteryRows(_batteries, false, context),
                   )
                 : InstructionsCard(
                     instructions: "Select a battery to start calculating",
@@ -367,9 +367,9 @@ class PanelBatteryCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.subtitle1,
               ),
             ),
-            products.isNotEmpty
+            _products.isNotEmpty
                 ? Column(
-                    children: products
+                    children: _products
                         .map(
                           (product) => _buildProductTile(product, context),
                         )

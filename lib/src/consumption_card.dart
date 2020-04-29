@@ -326,7 +326,8 @@ class ConsumptionCard extends StatelessWidget {
                     ],
                   ),
                 )
-                ?.toList() ??
+                ?.toList()
+                ?.cast<Widget>() ??
             [],
       );
 }

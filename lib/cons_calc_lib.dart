@@ -1,5 +1,10 @@
 library cons_calc_lib;
 
+export './src/blocs/dynamic_form_bloc.dart';
+export './src/models/answer_model.dart';
+export './src/models/consumption_product_model.dart';
+export './src/models/dynamic_form_model.dart';
+export './src/models/question_model.dart';
 export './src/bloc_provider.dart';
 export './src/circular_reveal_clipper.dart';
 export './src/circular_reveal_route.dart';

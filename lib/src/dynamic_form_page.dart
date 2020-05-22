@@ -5,15 +5,11 @@ import 'package:flutter/material.dart';
 class DynamicFormUI extends StatelessWidget {
   final _cardController = PageController(),
       _titlesController = PageController();
-
-  // TODO Envolvover en stream
   final _currentForm;
   final List<String> _titles;
   final double _currentTitlePage, _currentCardPage;
   final ButtonStatus _nextButtonStatus;
   final _currentQuestion;
-  //
-
   final Function _isBackButtonVisible,
       _isSelected,
       _setValue,

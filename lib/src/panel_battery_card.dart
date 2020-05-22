@@ -408,6 +408,7 @@ class PanelBatteryCard extends StatelessWidget {
             : CircularProfileAvatar(
                 product.imageUrl,
                 cacheImage: true,
+                radius: 20.0,
                 errorWidget: (_, __, ___) => CircleAvatar(
                   backgroundColor: Colors.black12,
                   child: Icon(

@@ -6,6 +6,7 @@ export './src/circular_reveal_route.dart';
 export './src/colors.dart';
 export './src/consumption_card.dart';
 export './src/custom_cache_manager.dart';
+export './src/expansion_tile.dart';
 export './src/instructions_card.dart';
 export './src/load_category_bloc.dart';
 export './src/load_category_page.dart';

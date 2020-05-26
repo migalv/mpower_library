@@ -192,7 +192,9 @@ class QuestionCardCarousel extends StatelessWidget {
                 children: [
                   answer.type == AnswerType.SELECT
                       ? _buildSelectAnswer(questionId, answer)
-                      : _buildOptionAnswer(questionId, answer),
+                      : answer.type == AnswerType.INPUT
+                          ? _buildInputAnswer(questionId, answer)
+                          : _buildOptionAnswer(questionId, answer),
                   Container(height: 12),
                 ],
               ),
@@ -234,6 +236,36 @@ class QuestionCardCarousel extends StatelessWidget {
           ),
         ],
       );
+
+  Widget _buildInputAnswer(String questionId, Answer answer) {
+    TextEditingController controller = TextEditingController();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Material(
+        color: _isSelected(questionId, answer)
+            ? Color(0x20FFC107)
+            : Theme.of(_context).canvasColor,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 8.0),
+          child: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              // TODO ENABLE LANGUAGES
+              hintText: answer.label["en"],
+              isDense: true,
+              isCollapsed: false,
+              hintStyle: Theme.of(_context)
+                  .textTheme
+                  .subtitle2
+                  .copyWith(fontWeight: FontWeight.w600, color: Colors.black45),
+            ),
+            onChanged: (text) => _setValue(answer, text),
+            onTap: () => _setValue(answer, controller.text),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildOptionAnswer(String questionId, Answer answer) => ClipRRect(
         borderRadius: BorderRadius.circular(8),

@@ -56,55 +56,53 @@ class DynamicFormUI extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: _currentForm == null
+      body: _currentForm == null || _titles.isEmpty
           ? Container()
-          : _titles.isEmpty
-              ? Container()
-              : Stack(
-                  children: <Widget>[
-                    _background(),
+          : Stack(
+              children: <Widget>[
+                _background(),
 
-                    // Titles
-                    Positioned.fill(
-                      child: PageView.builder(
-                        reverse: true,
-                        itemCount: _titles.length,
-                        controller: _titlesController,
-                        itemBuilder: (context, index) => Container(),
-                        scrollDirection: Axis.vertical,
-                      ),
-                    ),
-                    TitleListScroll(
-                      currentPage: _currentTitlePage,
-                      titles: _titles,
-                    ),
-
-                    // Cards
-                    Positioned.fill(
-                      child: PageView.builder(
-                        itemCount: _currentForm.questions.length,
-                        controller: _cardController,
-                        itemBuilder: (context, index) => Container(),
-                      ),
-                    ),
-                    QuestionCardCarousel(
-                      currentCardPage: _currentCardPage,
-                      cardController: _cardController,
-                      isWeb: MediaQuery.of(context).size.aspectRatio > 1,
-                      form: _currentForm,
-                      titlesController: _titlesController,
-                      nextButtonStatus: _nextButtonStatus,
-                      currentQuestion: _currentQuestion,
-                      finishAndSaveForm: _finishAndSaveForm,
-                      goToNextQuestion: _goToNextQuestion,
-                      goToPreviousQuestion: _goToPreviousQuestion,
-                      setValue: _setValue,
-                      isSelected: _isSelected,
-                      isBackButtonVisible: _isBackButtonVisible,
-                      saveAndRestartForm: _saveAndRestartForm,
-                    ),
-                  ],
+                // Titles
+                Positioned.fill(
+                  child: PageView.builder(
+                    reverse: true,
+                    itemCount: _titles.length,
+                    controller: _titlesController,
+                    itemBuilder: (context, index) => Container(),
+                    scrollDirection: Axis.vertical,
+                  ),
                 ),
+                TitleListScroll(
+                  currentPage: _currentTitlePage,
+                  titles: _titles,
+                ),
+
+                // Cards
+                Positioned.fill(
+                  child: PageView.builder(
+                    itemCount: _currentForm.questions.length,
+                    controller: _cardController,
+                    itemBuilder: (context, index) => Container(),
+                  ),
+                ),
+                QuestionCardCarousel(
+                  currentCardPage: _currentCardPage,
+                  cardController: _cardController,
+                  isWeb: MediaQuery.of(context).size.aspectRatio > 1,
+                  form: _currentForm,
+                  titlesController: _titlesController,
+                  nextButtonStatus: _nextButtonStatus,
+                  currentQuestion: _currentQuestion,
+                  finishAndSaveForm: _finishAndSaveForm,
+                  goToNextQuestion: _goToNextQuestion,
+                  goToPreviousQuestion: _goToPreviousQuestion,
+                  setValue: _setValue,
+                  isSelected: _isSelected,
+                  isBackButtonVisible: _isBackButtonVisible,
+                  saveAndRestartForm: _saveAndRestartForm,
+                ),
+              ],
+            ),
     );
   }
 

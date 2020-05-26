@@ -20,7 +20,8 @@ class QuestionCardCarousel extends StatelessWidget {
       _setValue,
       _goToPreviousQuestion,
       _goToNextQuestion,
-      _finishAndSaveForm;
+      _finishAndSaveForm,
+      _saveAndRestartForm;
 
   QuestionCardCarousel({
     @required currentCardPage,
@@ -36,6 +37,7 @@ class QuestionCardCarousel extends StatelessWidget {
     @required finishAndSaveForm,
     @required goToPreviousQuestion,
     @required goToNextQuestion,
+    @required saveAndRestartForm,
   })  : _form = form,
         _cardController = cardController,
         _isWeb = isWeb,
@@ -48,7 +50,8 @@ class QuestionCardCarousel extends StatelessWidget {
         _goToNextQuestion = goToNextQuestion,
         _finishAndSaveForm = finishAndSaveForm,
         _setValue = setValue,
-        _titlesController = titlesController;
+        _titlesController = titlesController,
+        _saveAndRestartForm = saveAndRestartForm;
 
   @override
   Widget build(BuildContext context) {
@@ -153,18 +156,14 @@ class QuestionCardCarousel extends StatelessWidget {
                     case ButtonStatus.FINISH:
                       _finishForm();
                       break;
+                    case ButtonStatus.RESTART:
+                      _restartForm();
+                      break;
                     default:
                       break;
                   }
                 },
-          child: Text(
-            _nextButtonStatus == ButtonStatus.FINISH
-                ? 'finish'
-                : _nextButtonStatus == ButtonStatus.NEXT ||
-                        _nextButtonStatus == ButtonStatus.DISABLED
-                    ? 'next'
-                    : '',
-          ),
+          child: Text('next'),
         ),
       );
   Widget _question() => Align(
@@ -296,6 +295,16 @@ class QuestionCardCarousel extends StatelessWidget {
       curve: Curves.easeInOut,
     );
     _titlesController.animateToPage(
+      _currentCardPage.truncate() + 1,
+      duration: Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _restartForm() {
+    _saveAndRestartForm();
+
+    _cardController.animateToPage(
       _currentCardPage.truncate() + 1,
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,

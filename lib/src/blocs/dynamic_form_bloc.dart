@@ -91,31 +91,30 @@ class DynamicFormUIBloc {
 
   void nextQuestion() {
     // Delayed to avoid an animation flaw
-    Future.delayed(
-      Duration(milliseconds: 200),
-      () {
-        _previousQuestionsController
-            .add(previousQuestions.value..add(currentQuestion.value.id));
+    Future.delayed(Duration(milliseconds: 200), () {
+      _previousQuestionsController
+          .add(previousQuestions.value..add(currentQuestion.value.id));
 
-        Question question = currentForm.value.questions.singleWhere(
-          (q) => q.id == _currentAnswer.nextQuestionId,
-          orElse: () => null,
-        );
-        _currentQuestionController.add(question);
+      Question question = currentForm.value.questions.singleWhere(
+        (q) => q.id == _currentAnswer.nextQuestionId,
+        orElse: () => null,
+      );
+      _currentQuestionController.add(question);
 
-        _updateButtonStatus();
-      },
-    );
+      _updateButtonStatus();
+    });
   }
 
   void saveAndRestartForm() {
-    _formResults.add(currentFormResults.value);
-    _previousQuestionsController.add([]);
-    _currentQuestionController.add(currentForm.value.questions
-        .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
-    _currentFormResultsController.add(null);
+    Future.delayed(Duration(milliseconds: 200), () {
+      _formResults.add(currentFormResults.value);
+      _previousQuestionsController.add([]);
+      _currentQuestionController.add(currentForm.value.questions
+          .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
+      _currentFormResultsController.add(null);
 
-    _updateButtonStatus();
+      _updateButtonStatus();
+    });
   }
 
   Future<List<ConsumptionProduct>> finishAndSaveForm() async {

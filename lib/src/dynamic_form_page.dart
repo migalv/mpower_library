@@ -16,7 +16,8 @@ class DynamicFormUI extends StatelessWidget {
       _goToPreviousQuestion,
       _goToNextQuestion,
       _finishAndSaveForm,
-      _setCurrentPage;
+      _setCurrentPage,
+      _saveAndRestartForm;
 
   DynamicFormUI({
     Key key,
@@ -33,6 +34,7 @@ class DynamicFormUI extends StatelessWidget {
     @required goToPreviousQuestion,
     @required goToNextQuestion,
     @required setCurrentPage,
+    @required saveAndRestartForm,
   })  : _currentForm = currentForm,
         _titles = titles,
         _nextButtonStatus = nextButtonStatus,
@@ -45,7 +47,8 @@ class DynamicFormUI extends StatelessWidget {
         _goToNextQuestion = goToNextQuestion,
         _finishAndSaveForm = finishAndSaveForm,
         _setCurrentPage = setCurrentPage,
-        _setValue = setValue;
+        _setValue = setValue,
+        _saveAndRestartForm = saveAndRestartForm;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +101,7 @@ class DynamicFormUI extends StatelessWidget {
                       setValue: _setValue,
                       isSelected: _isSelected,
                       isBackButtonVisible: _isBackButtonVisible,
+                      saveAndRestartForm: _saveAndRestartForm,
                     ),
                   ],
                 ),

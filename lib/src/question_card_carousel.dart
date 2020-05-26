@@ -185,78 +185,81 @@ class QuestionCardCarousel extends StatelessWidget {
         ),
       );
 
-  Widget _answers(String questionId, List answers) => Column(
+  Widget _answers(String questionId, List<Answer> answers) => Column(
         children: answers
             .map(
               (answer) => Column(
                 children: [
                   answer.type == AnswerType.SELECT
-                      ? CustomExpansionTile(
-                          key: key,
-                          selectedColor: secondaryMain,
-                          title: Text(answer.label['en']),
-                          children: [
-                            Container(
-                              height: MediaQuery.of(_context).size.height / 5,
-                              width: double.infinity,
-                              child: CupertinoPicker(
-                                magnification: 1.5,
-                                itemExtent: 25,
-                                onSelectedItemChanged: (int index) {
-                                  _setValue(answer, answer.value[index]);
-                                },
-                                children: answer.value
-                                    .map(
-                                      (option) => Container(
-                                        margin:
-                                            EdgeInsets.only(top: 4, bottom: 4),
-                                        child: Text(
-                                          option.toString(),
-                                          style: TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                    )
-                                    .cast<Widget>()
-                                    .toList(),
-                              ),
-                            ),
-                          ],
-                        )
-                      : ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Material(
-                            color: _isSelected(questionId, answer)
-                                ? Color(0x20FFC107)
-                                : Theme.of(_context).canvasColor,
-                            child: InkWell(
-                              onTap: () {
-                                _setValue(answer, answer.value);
-                              },
-                              child: Container(
-                                padding: EdgeInsets.all(12),
-                                width: double.infinity,
-                                child: Text(
-                                  answer.label['en'],
-                                  style: Theme.of(_context)
-                                      .textTheme
-                                      .subtitle2
-                                      .copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: _isSelected(questionId, answer)
-                                            ? secondaryMain
-                                            : Colors.black45,
-                                      ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                      ? _buildSelectAnswer(questionId, answer)
+                      : _buildOptionAnswer(questionId, answer),
                   Container(height: 12),
                 ],
               ),
             )
             .toList()
             .cast<Widget>(),
+      );
+
+  Widget _buildSelectAnswer(String questionId, Answer answer) =>
+      CustomExpansionTile(
+        selectedColor: secondaryMain,
+        title: Text(answer.label['en']),
+        onExpansionChanged: (expanded) =>
+            expanded ? _setValue(answer, answer.value[0]) : null,
+        initiallyExpanded: _isSelected(questionId, answer),
+        children: [
+          Container(
+            height: MediaQuery.of(_context).size.height / 5,
+            width: double.infinity,
+            child: CupertinoPicker(
+              magnification: 1.5,
+              itemExtent: 25,
+              onSelectedItemChanged: (int index) {
+                _setValue(answer, answer.value[index]);
+              },
+              children: answer.value
+                  .map(
+                    (option) => Container(
+                      margin: EdgeInsets.only(top: 4, bottom: 4),
+                      child: Text(
+                        option.toString(),
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  )
+                  .cast<Widget>()
+                  .toList(),
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildOptionAnswer(String questionId, Answer answer) => ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Material(
+          color: _isSelected(questionId, answer)
+              ? Color(0x20FFC107)
+              : Theme.of(_context).canvasColor,
+          child: InkWell(
+            onTap: () {
+              _setValue(answer, answer.value);
+            },
+            child: Container(
+              padding: EdgeInsets.all(12),
+              width: double.infinity,
+              child: Text(
+                answer.label['en'],
+                style: Theme.of(_context).textTheme.subtitle2.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _isSelected(questionId, answer)
+                          ? secondaryMain
+                          : Colors.black45,
+                    ),
+              ),
+            ),
+          ),
+        ),
       );
 
   // Methods

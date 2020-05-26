@@ -57,23 +57,36 @@ class CustomExpansionTileState extends State<CustomExpansionTile>
     super.dispose();
   }
 
-  void handleTap() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) {
-        _controller.forward();
-      } else {
-        _controller.reverse().then<void>((void value) {
-          if (!mounted) return;
-          setState(() {
-            // Rebuild without widget.children.
+  void _setExpanded(bool isExpanded) {
+    if (_isExpanded != isExpanded) {
+      setState(() {
+        _isExpanded = isExpanded;
+        if (_isExpanded)
+          _controller.forward();
+        else
+          _controller.reverse().then<void>((void value) {
+            setState(() {
+              // Rebuild without widget.children.
+            });
           });
-        });
+        PageStorage.of(context)?.writeState(context, _isExpanded);
+      });
+      if (widget.onExpansionChanged != null) {
+        widget.onExpansionChanged(_isExpanded);
       }
-      PageStorage.of(context)?.writeState(context, _isExpanded);
-    });
-    if (widget.onExpansionChanged != null)
-      widget.onExpansionChanged(_isExpanded);
+    }
+  }
+
+  void expand() {
+    _setExpanded(true);
+  }
+
+  void collapse() {
+    _setExpanded(false);
+  }
+
+  void toggle() {
+    _setExpanded(!_isExpanded);
   }
 
   Widget _buildChildren(BuildContext context, Widget child) {
@@ -81,7 +94,7 @@ class CustomExpansionTileState extends State<CustomExpansionTile>
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         GestureDetector(
-          onTap: handleTap,
+          onTap: toggle,
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),

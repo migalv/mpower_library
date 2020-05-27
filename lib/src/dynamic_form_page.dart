@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -62,11 +64,13 @@ class DynamicFormUI extends StatefulWidget {
 class _DynamicFormUIState extends State<DynamicFormUI> {
   final _cardController = PageController(),
       _titlesController = PageController();
+  List<StreamSubscription> _streamSubscriptions = [];
 
   @override
   void initState() {
     _listenToPageChanges();
-    KeyboardVisibility.onChange.listen(widget._updateKeyboardVisibility);
+    _streamSubscriptions.add(
+        KeyboardVisibility.onChange.listen(widget._updateKeyboardVisibility));
     super.initState();
   }
 
@@ -134,5 +138,11 @@ class _DynamicFormUIState extends State<DynamicFormUI> {
     _titlesController.addListener(() {
       widget._setCurrentPage(_titlesController.page, card: false);
     });
+  }
+
+  @override
+  void dispose() {
+    _streamSubscriptions.forEach((s) => s.cancel());
+    super.dispose();
   }
 }

@@ -1,10 +1,9 @@
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
-class DynamicFormUI extends StatelessWidget {
-  final _cardController = PageController(),
-      _titlesController = PageController();
+class DynamicFormUI extends StatefulWidget {
   final _currentForm;
   final List<String> _titles;
   final double _currentTitlePage, _currentCardPage;
@@ -17,7 +16,9 @@ class DynamicFormUI extends StatelessWidget {
       _goToNextQuestion,
       _finishAndSaveForm,
       _setCurrentPage,
-      _saveAndRestartForm;
+      _saveAndRestartForm,
+      _updateKeyboardVisibility;
+  final Stream<bool> _isKeyboardVisible;
 
   DynamicFormUI({
     Key key,
@@ -35,6 +36,8 @@ class DynamicFormUI extends StatelessWidget {
     @required goToNextQuestion,
     @required setCurrentPage,
     @required saveAndRestartForm,
+    @required isKeyboardVisible,
+    @required updateKeyboardVisibility,
   })  : _currentForm = currentForm,
         _titles = titles,
         _nextButtonStatus = nextButtonStatus,
@@ -48,15 +51,30 @@ class DynamicFormUI extends StatelessWidget {
         _finishAndSaveForm = finishAndSaveForm,
         _setCurrentPage = setCurrentPage,
         _setValue = setValue,
-        _saveAndRestartForm = saveAndRestartForm;
+        _saveAndRestartForm = saveAndRestartForm,
+        _isKeyboardVisible = isKeyboardVisible,
+        _updateKeyboardVisibility = updateKeyboardVisibility;
+
+  @override
+  _DynamicFormUIState createState() => _DynamicFormUIState();
+}
+
+class _DynamicFormUIState extends State<DynamicFormUI> {
+  final _cardController = PageController(),
+      _titlesController = PageController();
+
+  @override
+  void initState() {
+    _listenToPageChanges();
+    KeyboardVisibility.onChange.listen(widget._updateKeyboardVisibility);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    _listenToPageChanges();
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: _currentForm == null || _titles.isEmpty
+      body: widget._currentForm == null || widget._titles.isEmpty
           ? Container()
           : Stack(
               children: <Widget>[
@@ -66,40 +84,41 @@ class DynamicFormUI extends StatelessWidget {
                 Positioned.fill(
                   child: PageView.builder(
                     reverse: true,
-                    itemCount: _titles.length,
+                    itemCount: widget._titles.length,
                     controller: _titlesController,
                     itemBuilder: (context, index) => Container(),
                     scrollDirection: Axis.vertical,
                   ),
                 ),
                 TitleListScroll(
-                  currentPage: _currentTitlePage,
-                  titles: _titles,
+                  currentPage: widget._currentTitlePage,
+                  titles: widget._titles,
                 ),
 
                 // Cards
                 Positioned.fill(
                   child: PageView.builder(
-                    itemCount: _currentForm.questions.length,
+                    itemCount: widget._currentForm.questions.length,
                     controller: _cardController,
                     itemBuilder: (context, index) => Container(),
                   ),
                 ),
                 QuestionCardCarousel(
-                  currentCardPage: _currentCardPage,
+                  currentCardPage: widget._currentCardPage,
                   cardController: _cardController,
                   isWeb: MediaQuery.of(context).size.aspectRatio > 1,
-                  form: _currentForm,
+                  form: widget._currentForm,
                   titlesController: _titlesController,
-                  nextButtonStatus: _nextButtonStatus,
-                  currentQuestion: _currentQuestion,
-                  finishAndSaveForm: _finishAndSaveForm,
-                  goToNextQuestion: _goToNextQuestion,
-                  goToPreviousQuestion: _goToPreviousQuestion,
-                  setValue: _setValue,
-                  isSelected: _isSelected,
-                  isBackButtonVisible: _isBackButtonVisible,
-                  saveAndRestartForm: _saveAndRestartForm,
+                  nextButtonStatus: widget._nextButtonStatus,
+                  currentQuestion: widget._currentQuestion,
+                  finishAndSaveForm: widget._finishAndSaveForm,
+                  goToNextQuestion: widget._goToNextQuestion,
+                  goToPreviousQuestion: widget._goToPreviousQuestion,
+                  setValue: widget._setValue,
+                  isSelected: widget._isSelected,
+                  isBackButtonVisible: widget._isBackButtonVisible,
+                  saveAndRestartForm: widget._saveAndRestartForm,
+                  isKeyboardVisible: widget._isKeyboardVisible,
                 ),
               ],
             ),
@@ -110,10 +129,10 @@ class DynamicFormUI extends StatelessWidget {
 
   void _listenToPageChanges() {
     _cardController.addListener(() {
-      _setCurrentPage(_cardController.page);
+      widget._setCurrentPage(_cardController.page);
     });
     _titlesController.addListener(() {
-      _setCurrentPage(_titlesController.page, card: false);
+      widget._setCurrentPage(_titlesController.page, card: false);
     });
   }
 }

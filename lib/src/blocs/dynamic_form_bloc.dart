@@ -27,6 +27,7 @@ class DynamicFormUIBloc {
   Stream<double> get currentTitlePage => _currentTitlePageController.stream;
   ValueObservable<List<String>> get titles => _titlesController.stream;
   Stream<List<DynamicForm>> get forms => _formsController.stream;
+  Stream<bool> get isKeyboardVisible => _isKeyboardVisibleController.stream;
 
   // Controllers
   final _currentFormResultsController = BehaviorSubject<Map>();
@@ -38,6 +39,7 @@ class DynamicFormUIBloc {
   final _currentTitlePageController = PublishSubject<double>();
   final _titlesController = BehaviorSubject<List<String>>.seeded([]);
   final _formsController = BehaviorSubject<List<DynamicForm>>();
+  final _isKeyboardVisibleController = StreamController<bool>();
 
   // Getters
   bool get _isCurrentQuestionAnswered =>
@@ -227,6 +229,9 @@ class DynamicFormUIBloc {
       _nextButtonStatusController.add(ButtonStatus.DISABLED);
   }
 
+  void updateKeyboardVisibility(bool isVisible) =>
+      _isKeyboardVisibleController.add(isVisible);
+
   void goToPreviousQuestion() {
     Future.delayed(Duration(milliseconds: 200), () {
       _currentQuestionController.add(currentForm.value.questions.singleWhere(
@@ -267,6 +272,7 @@ class DynamicFormUIBloc {
     _currentTitlePageController.close();
     _titlesController.close();
     _formsController.close();
+    _isKeyboardVisibleController.close();
 
     _subscription.cancel();
   }

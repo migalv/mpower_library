@@ -17,9 +17,10 @@ dependencies:
   rxdart: 0.22.2
   cloud_firestore: ^0.13.5
   intl: ^0.16.1
+  flutter_keyboard_visibility: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-    
+
 flutter:

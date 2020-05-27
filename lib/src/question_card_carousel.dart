@@ -4,12 +4,8 @@ import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-BuildContext _context;
-
-class QuestionCardCarousel extends StatelessWidget {
+class QuestionCardCarousel extends StatefulWidget {
   final _currentCardPage;
-  final padding = 18.0;
-  final verticalInset = 18.0;
   final PageController _cardController, _titlesController;
   final bool _isWeb;
   final _form;
@@ -22,23 +18,25 @@ class QuestionCardCarousel extends StatelessWidget {
       _goToNextQuestion,
       _finishAndSaveForm,
       _saveAndRestartForm;
+  final Stream<bool> _isKeyboardVisible;
 
-  QuestionCardCarousel({
-    @required currentCardPage,
-    @required cardController,
-    @required titlesController,
-    @required isWeb,
-    @required form,
-    @required nextButtonStatus,
-    @required currentQuestion,
-    @required isBackButtonVisible,
-    @required isSelected,
-    @required setValue,
-    @required finishAndSaveForm,
-    @required goToPreviousQuestion,
-    @required goToNextQuestion,
-    @required saveAndRestartForm,
-  })  : _form = form,
+  QuestionCardCarousel(
+      {@required currentCardPage,
+      @required cardController,
+      @required titlesController,
+      @required isWeb,
+      @required form,
+      @required nextButtonStatus,
+      @required currentQuestion,
+      @required isBackButtonVisible,
+      @required isSelected,
+      @required setValue,
+      @required finishAndSaveForm,
+      @required goToPreviousQuestion,
+      @required goToNextQuestion,
+      @required saveAndRestartForm,
+      @required isKeyboardVisible})
+      : _form = form,
         _cardController = cardController,
         _isWeb = isWeb,
         _currentCardPage = currentCardPage,
@@ -51,77 +49,91 @@ class QuestionCardCarousel extends StatelessWidget {
         _finishAndSaveForm = finishAndSaveForm,
         _setValue = setValue,
         _titlesController = titlesController,
-        _saveAndRestartForm = saveAndRestartForm;
+        _saveAndRestartForm = saveAndRestartForm,
+        _isKeyboardVisible = isKeyboardVisible;
+
+  @override
+  _QuestionCardCarouselState createState() => _QuestionCardCarouselState();
+}
+
+class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
+  final padding = 18.0;
+
+  final verticalInset = 18.0;
+  Map<String, TextEditingController> textFieldControllers = {};
 
   @override
   Widget build(BuildContext context) {
-    _context = context;
+    return StreamBuilder<bool>(
+        stream: widget._isKeyboardVisible,
+        initialData: false,
+        builder: (context, isKeyboardVisibleSnapshot) {
+          return LayoutBuilder(
+            builder: (context, contraints) {
+              List<Widget> children = [];
 
-    return LayoutBuilder(
-      builder: (context, contraints) {
-        List<Widget> children = [];
+              for (var i = 0; i < widget._form.questions.length; i++) {
+                var delta = i - widget._currentCardPage;
+                bool isOnRight = delta > 0;
 
-        for (var i = 0; i < _form.questions.length; i++) {
-          var delta = i - _currentCardPage;
-          bool isOnRight = delta > 0;
+                var start = padding +
+                    (widget._isWeb
+                        ? max(20 - 50 * -delta * (isOnRight ? 90 : 1), 0.0)
+                        : max(20 - 20 * -delta * (isOnRight ? 18 : 1), 0.0));
 
-          var start = padding +
-              (_isWeb
-                  ? max(20 - 50 * -delta * (isOnRight ? 90 : 1), 0.0)
-                  : max(20 - 20 * -delta * (isOnRight ? 18 : 1), 0.0));
+                var elevation =
+                    MAX_ELEVATION - max(-MAX_ELEVATION * delta, 0.0);
+                var opacity = MAX_OPACITY - max(-delta, 0.0);
 
-          var elevation = MAX_ELEVATION - max(-MAX_ELEVATION * delta, 0.0);
-          var opacity = MAX_OPACITY - max(-delta, 0.0);
-
-          children.add(
-            Positioned.directional(
-              textDirection: TextDirection.ltr,
-              top: MediaQuery.of(context).size.height * .45 +
-                  verticalInset * max(-delta, 0.0),
-              bottom: padding + verticalInset * max(-delta, 0.0),
-              start: start,
-              child: Opacity(
-                opacity: opacity < MIN_OPACITY ? MIN_OPACITY : opacity,
-                child: Material(
-                  color: Colors.transparent,
-                  elevation: elevation < 0 ? 0 : elevation,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      color: Colors.white,
-                      width: MediaQuery.of(context).size.width - 70,
-                      child: Opacity(
-                        opacity: opacity < 0 ? 0 : opacity,
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Stack(
-                            children: [
-                              _backButton(),
-                              _nextButton(),
-                              _question(),
-                            ],
+                children.add(
+                  Positioned.directional(
+                    textDirection: TextDirection.ltr,
+                    top: MediaQuery.of(context).size.height * .45 +
+                        verticalInset * max(-delta, 0.0) -
+                        (isKeyboardVisibleSnapshot.data ? 160.0 : 0.0),
+                    bottom: padding + verticalInset * max(-delta, 0.0),
+                    start: start,
+                    child: Opacity(
+                      opacity: opacity < MIN_OPACITY ? MIN_OPACITY : opacity,
+                      child: Material(
+                        color: Colors.transparent,
+                        elevation: elevation < 0 ? 0 : elevation,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            color: Colors.white,
+                            width: MediaQuery.of(context).size.width - 70,
+                            child: Opacity(
+                              opacity: opacity < 0 ? 0 : opacity,
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Stack(
+                                  children: [
+                                    _backButton(),
+                                    _nextButton(),
+                                    _question(),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          );
-        }
+                );
+              }
 
-        return Stack(
-          fit: StackFit.expand,
-          children: children,
-        );
-      },
-    );
+              return Stack(
+                fit: StackFit.expand,
+                children: children,
+              );
+            },
+          );
+        });
   }
 
-  // Build
-
-  Widget _backButton() => _isBackButtonVisible()
+  Widget _backButton() => widget._isBackButtonVisible()
       ? Align(
           alignment: Alignment.bottomLeft,
           child: IconButton(
@@ -130,10 +142,10 @@ class QuestionCardCarousel extends StatelessWidget {
               color: Colors.black45,
             ),
             onPressed: () {
-              _goToPreviousQuestion();
+              widget._goToPreviousQuestion();
 
-              _cardController.animateToPage(
-                _currentCardPage.truncate() - 1,
+              widget._cardController.animateToPage(
+                widget._currentCardPage.truncate() - 1,
                 duration: Duration(milliseconds: 400),
                 curve: Curves.easeInOut,
               );
@@ -146,10 +158,10 @@ class QuestionCardCarousel extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         child: FlatButton(
           color: secondaryMain,
-          onPressed: _nextButtonStatus == ButtonStatus.DISABLED
+          onPressed: widget._nextButtonStatus == ButtonStatus.DISABLED
               ? null
               : () {
-                  switch (_nextButtonStatus) {
+                  switch (widget._nextButtonStatus) {
                     case ButtonStatus.NEXT:
                       _nextQuestion();
                       break;
@@ -166,20 +178,22 @@ class QuestionCardCarousel extends StatelessWidget {
           child: Text('next'),
         ),
       );
+
   Widget _question() => Align(
         alignment: Alignment.topLeft,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: _currentQuestion == null
+          child: widget._currentQuestion == null
               ? Container()
               : Column(
                   children: [
                     Text(
-                      _currentQuestion.label['en'],
-                      style: Theme.of(_context).textTheme.subtitle1,
+                      widget._currentQuestion.label['en'],
+                      style: Theme.of(context).textTheme.subtitle1,
                     ),
                     Container(height: 16),
-                    _answers(_currentQuestion.id, _currentQuestion.answers)
+                    _answers(widget._currentQuestion.id,
+                        widget._currentQuestion.answers)
                   ],
                 ),
         ),
@@ -208,17 +222,17 @@ class QuestionCardCarousel extends StatelessWidget {
         selectedColor: secondaryMain,
         title: Text(answer.label['en']),
         onExpansionChanged: (expanded) =>
-            expanded ? _setValue(answer, answer.value[0]) : null,
-        initiallyExpanded: _isSelected(questionId, answer),
+            expanded ? widget._setValue(answer, answer.value[0]) : null,
+        initiallyExpanded: widget._isSelected(questionId, answer),
         children: [
           Container(
-            height: MediaQuery.of(_context).size.height / 5,
+            height: MediaQuery.of(context).size.height / 5,
             width: double.infinity,
             child: CupertinoPicker(
               magnification: 1.5,
               itemExtent: 25,
               onSelectedItemChanged: (int index) {
-                _setValue(answer, answer.value[index]);
+                widget._setValue(answer, answer.value[index]);
               },
               children: answer.value
                   .map(
@@ -238,29 +252,31 @@ class QuestionCardCarousel extends StatelessWidget {
       );
 
   Widget _buildInputAnswer(String questionId, Answer answer) {
-    TextEditingController controller = TextEditingController();
+    if (textFieldControllers[answer.id] == null)
+      textFieldControllers[answer.id] = TextEditingController();
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Material(
-        color: _isSelected(questionId, answer)
+        color: widget._isSelected(questionId, answer)
             ? Color(0x20FFC107)
-            : Theme.of(_context).canvasColor,
+            : Theme.of(context).canvasColor,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 8.0),
           child: TextField(
-            controller: controller,
+            controller: textFieldControllers[answer.id],
             decoration: InputDecoration(
               // TODO ENABLE LANGUAGES
               hintText: answer.label["en"],
               isDense: true,
               isCollapsed: false,
-              hintStyle: Theme.of(_context)
+              hintStyle: Theme.of(context)
                   .textTheme
                   .subtitle2
                   .copyWith(fontWeight: FontWeight.w600, color: Colors.black45),
             ),
-            onChanged: (text) => _setValue(answer, text),
-            onTap: () => _setValue(answer, controller.text),
+            onChanged: (text) => widget._setValue(answer, text),
+            onTap: () =>
+                widget._setValue(answer, textFieldControllers[answer.id].text),
           ),
         ),
       ),
@@ -270,21 +286,21 @@ class QuestionCardCarousel extends StatelessWidget {
   Widget _buildOptionAnswer(String questionId, Answer answer) => ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Material(
-          color: _isSelected(questionId, answer)
+          color: widget._isSelected(questionId, answer)
               ? Color(0x20FFC107)
-              : Theme.of(_context).canvasColor,
+              : Theme.of(context).canvasColor,
           child: InkWell(
             onTap: () {
-              _setValue(answer, answer.value);
+              widget._setValue(answer, answer.value);
             },
             child: Container(
               padding: EdgeInsets.all(12),
               width: double.infinity,
               child: Text(
                 answer.label['en'],
-                style: Theme.of(_context).textTheme.subtitle2.copyWith(
+                style: Theme.of(context).textTheme.subtitle2.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: _isSelected(questionId, answer)
+                      color: widget._isSelected(questionId, answer)
                           ? secondaryMain
                           : Colors.black45,
                     ),
@@ -294,23 +310,22 @@ class QuestionCardCarousel extends StatelessWidget {
         ),
       );
 
-  // Methods
   void _nextQuestion() {
-    _goToNextQuestion();
+    widget._goToNextQuestion();
 
-    _cardController.animateToPage(
-      _currentCardPage.truncate() + 1,
+    widget._cardController.animateToPage(
+      widget._currentCardPage.truncate() + 1,
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
   }
 
   void _finishForm() async {
-    var consumptionProducts = await _finishAndSaveForm();
+    var consumptionProducts = await widget._finishAndSaveForm();
 
     // TODO Revisar
     // if (consumptionProducts.isNotEmpty) {
-    //   Navigator.pop(_context);
+    //   Navigator.pop(context);
     //   utils.push(
     //     context,
     //     BlocProvider<BundleRecommendationBloc>(
@@ -324,23 +339,23 @@ class QuestionCardCarousel extends StatelessWidget {
     // }
 
     // TODO No animar si no hay mas cartas despues
-    _cardController.animateToPage(
-      _currentCardPage.truncate() + 1,
+    widget._cardController.animateToPage(
+      widget._currentCardPage.truncate() + 1,
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
-    _titlesController.animateToPage(
-      _currentCardPage.truncate() + 1,
+    widget._titlesController.animateToPage(
+      widget._currentCardPage.truncate() + 1,
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
   }
 
   void _restartForm() {
-    _saveAndRestartForm();
+    widget._saveAndRestartForm();
 
-    _cardController.animateToPage(
-      _currentCardPage.truncate() + 1,
+    widget._cardController.animateToPage(
+      widget._currentCardPage.truncate() + 1,
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );

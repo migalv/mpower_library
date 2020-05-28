@@ -107,11 +107,10 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                               opacity: opacity < 0 ? 0 : opacity,
                               child: Padding(
                                 padding: EdgeInsets.all(8.0),
-                                child: Stack(
+                                child: Column(
                                   children: [
-                                    _backButton(),
-                                    _nextButton(),
                                     _question(),
+                                    _buildButtonsRow(),
                                   ],
                                 ),
                               ),
@@ -132,6 +131,13 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
           );
         });
   }
+
+  Widget _buildButtonsRow() => Stack(
+        children: [
+          _backButton(),
+          _nextButton(),
+        ],
+      );
 
   Widget _backButton() => widget._isBackButtonVisible()
       ? Align(
@@ -179,8 +185,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         ),
       );
 
-  Widget _question() => Align(
-        alignment: Alignment.topLeft,
+  Widget _question() => Expanded(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: widget._currentQuestion == null
@@ -191,7 +196,6 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                       widget._currentQuestion.label['en'],
                       style: Theme.of(context).textTheme.subtitle1,
                     ),
-                    Container(height: 16),
                     _answers(widget._currentQuestion.id,
                         widget._currentQuestion.answers)
                   ],
@@ -199,22 +203,21 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         ),
       );
 
-  Widget _answers(String questionId, List<Answer> answers) => Column(
-        children: answers
-            .map(
-              (answer) => Column(
-                children: [
-                  answer.type == AnswerType.SELECT
-                      ? _buildSelectAnswer(questionId, answer)
-                      : answer.type == AnswerType.INPUT
-                          ? _buildInputAnswer(questionId, answer)
-                          : _buildOptionAnswer(questionId, answer),
-                  Container(height: 12),
-                ],
-              ),
-            )
-            .toList()
-            .cast<Widget>(),
+  Widget _answers(String questionId, List<Answer> answers) => Expanded(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          children: answers
+              .map((answer) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: answer.type == AnswerType.SELECT
+                        ? _buildSelectAnswer(questionId, answer)
+                        : answer.type == AnswerType.INPUT
+                            ? _buildInputAnswer(questionId, answer)
+                            : _buildOptionAnswer(questionId, answer),
+                  ))
+              .toList()
+              .cast<Widget>(),
+        ),
       );
 
   Widget _buildSelectAnswer(String questionId, Answer answer) =>

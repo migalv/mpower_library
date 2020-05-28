@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class QuestionCardCarousel extends StatefulWidget {
-  final _currentCardPage;
+  final _currentCardPage, _currentTitlePage;
   final PageController _cardController, _titlesController;
   final bool _isWeb;
   final _form;
@@ -20,24 +20,26 @@ class QuestionCardCarousel extends StatefulWidget {
       _saveAndRestartForm;
   final Stream<bool> _isKeyboardVisible;
 
-  QuestionCardCarousel(
-      {@required currentCardPage,
-      @required cardController,
-      @required titlesController,
-      @required isWeb,
-      @required form,
-      @required nextButtonStatus,
-      @required currentQuestion,
-      @required isBackButtonVisible,
-      @required isSelected,
-      @required setValue,
-      @required finishAndSaveForm,
-      @required goToPreviousQuestion,
-      @required goToNextQuestion,
-      @required saveAndRestartForm,
-      @required isKeyboardVisible})
-      : _form = form,
+  QuestionCardCarousel({
+    @required currentCardPage,
+    @required currentTitlePage,
+    @required cardController,
+    @required titlesController,
+    @required isWeb,
+    @required form,
+    @required nextButtonStatus,
+    @required currentQuestion,
+    @required isBackButtonVisible,
+    @required isSelected,
+    @required setValue,
+    @required finishAndSaveForm,
+    @required goToPreviousQuestion,
+    @required goToNextQuestion,
+    @required saveAndRestartForm,
+    @required isKeyboardVisible,
+  })  : _form = form,
         _cardController = cardController,
+        _currentTitlePage = currentTitlePage,
         _isWeb = isWeb,
         _currentCardPage = currentCardPage,
         _nextButtonStatus = nextButtonStatus,
@@ -348,7 +350,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
       curve: Curves.easeInOut,
     );
     widget._titlesController.animateToPage(
-      widget._currentCardPage.truncate() + 1,
+      widget._currentTitlePage.truncate() + 1,
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );

@@ -109,6 +109,7 @@ class _DynamicFormUIState extends State<DynamicFormUI> {
                 ),
                 QuestionCardCarousel(
                   currentCardPage: widget._currentCardPage,
+                  currentTitlePage: widget._currentTitlePage,
                   cardController: _cardController,
                   isWeb: MediaQuery.of(context).size.aspectRatio > 1,
                   form: widget._currentForm,

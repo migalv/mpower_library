@@ -3,27 +3,28 @@ import 'package:cons_calc_lib/cons_calc_lib.dart';
 class Answer {
   final String id;
   final AnswerType type;
-  final dynamic value;
   final String nextQuestionId;
   final Map<String, String> label;
   final String key;
   final bool isDefault;
   final bool restartForm;
+  dynamic _value;
+  dynamic get value => _value;
 
   Answer({
     this.id,
     this.type,
-    this.value,
+    value,
     this.nextQuestionId,
     this.label,
     this.key,
     this.isDefault = false,
     this.restartForm,
-  });
+  }) : _value = value;
 
   Answer.fromJson(Map<String, dynamic> json)
       : this.id = json[ID],
-        this.value = json[VALUE],
+        _value = json[VALUE],
         this.nextQuestionId = json[NEXT_QUESTION_ID],
         this.label =
             json[LABEL] != null ? Map<String, String>.from(json[LABEL]) : null,
@@ -31,6 +32,8 @@ class Answer {
         this.isDefault = json[DEFAULT] ?? false,
         this.type = json[TYPE] != null ? AnswerType.values[json[TYPE]] : null,
         this.restartForm = json[RESTART_FORM] ?? false;
+
+  void setNewValue(dynamic newValue) => _value = newValue;
 
   static const String ID = "answer_id";
   static const String VALUE = "value";

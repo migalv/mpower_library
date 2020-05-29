@@ -1,8 +1,12 @@
 import 'dart:math';
 
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class QuestionCardCarousel extends StatefulWidget {
   final _currentCardPage, _currentTitlePage;
@@ -215,7 +219,9 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                         ? _buildSelectAnswer(questionId, answer)
                         : answer.type == AnswerType.INPUT
                             ? _buildInputAnswer(questionId, answer)
-                            : _buildOptionAnswer(questionId, answer),
+                            : answer.type == AnswerType.PRODUCT_LIST
+                                ? _buildImageAnswer(questionId, answer)
+                                : _buildOptionAnswer(questionId, answer),
                   ))
               .toList()
               .cast<Widget>(),
@@ -298,6 +304,12 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
             onTap: () {
               widget._setValue(answer, answer.value);
             },
+            splashColor: widget._isSelected(questionId, answer)
+                ? Color(0x40FFC107)
+                : null,
+            highlightColor: widget._isSelected(questionId, answer)
+                ? Color(0x20FFC107)
+                : null,
             child: Container(
               padding: EdgeInsets.all(12),
               width: double.infinity,
@@ -315,6 +327,80 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         ),
       );
 
+  Widget _buildImageAnswer(String questionId, Answer answer) => CarouselSlider(
+        options: CarouselOptions(
+          autoPlay: true,
+          aspectRatio: 2.0,
+          enlargeCenterPage: true,
+        ),
+        items: answer.value
+            .map((product) => _buildProductCard(product))
+            .cast<Widget>()
+            .toList(),
+      );
+
+  Widget _buildProductCard(dynamic product) => Container(
+        width: 184.0,
+        margin: const EdgeInsets.only(right: 8.0),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Column(
+            children: <Widget>[
+              Container(
+                height: 74.0,
+                width: 184.0,
+                child: isValidURL(product.imageURL)
+                    ? CachedNetworkImage(
+                        useOldImageOnUrlChange: true,
+                        imageUrl: product.imageURL,
+                        placeholder: (_, __) => Icon(
+                          MdiIcons.tag,
+                          color: Colors.black26,
+                          size: 32.0,
+                        ),
+                      )
+                    : Icon(
+                        MdiIcons.tag,
+                        color: Colors.black26,
+                        size: 32.0,
+                      ),
+              ),
+              Divider(
+                height: 1.0,
+                color: Colors.black38,
+              ),
+              Container(
+                height: 32.0,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Container(
+                  alignment: Alignment.bottomCenter,
+                  height: 24.0,
+                  child: AutoSizeText(
+                    product.name,
+                    minFontSize: 12.0,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'LibreFranklin',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 19.94,
+                      letterSpacing: 0.25,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  // METHODS
   void _nextQuestion() {
     widget._goToNextQuestion();
 
@@ -364,6 +450,18 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
       duration: Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
+  }
+
+  bool isValidURL(String url) {
+    bool valid = false;
+    var urlPattern =
+        r"(https?|http)://([-A-Z0-9.]+)(/[-A-Z0-9+&@#/%=~_|!:,.;]*)?(\?[A-Z0-9+&@#/%=~_|!:‌​,.;]*)?";
+    if (url != null) {
+      var match = new RegExp(urlPattern, caseSensitive: false).firstMatch(url);
+      valid = match != null;
+    }
+
+    return valid;
   }
 }
 

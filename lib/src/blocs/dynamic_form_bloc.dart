@@ -159,7 +159,7 @@ class DynamicFormUIBloc {
           questionsMap.forEach(
             (questionId, answersMap) {
               if (answersMap['question_purpose'] ==
-                      QuestionPurpose.CONSUMPTION_CALCULATION &&
+                      QuestionPurpose.CONSUMPTION &&
                   answersMap['value'] != null &&
                   answersMap['key'] != null) {
                 var value = answersMap['value'];

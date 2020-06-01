@@ -213,19 +213,142 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           children: answers
-              .map((answer) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: answer.type == AnswerType.SELECT
-                        ? _buildSelectAnswer(questionId, answer)
-                        : answer.type == AnswerType.INPUT
-                            ? _buildInputAnswer(questionId, answer)
-                            : answer.type == AnswerType.PRODUCT_LIST
-                                ? _buildImageAnswer(questionId, answer)
-                                : _buildOptionAnswer(questionId, answer),
-                  ))
-              .toList()
-              .cast<Widget>(),
+                  .any((answer) => answer.type == AnswerType.IMAGE_OPTION)
+              ? _buildAnswerWithImages(questionId, answers)
+              : answers
+                  .map((answer) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: answer.type == AnswerType.SELECT
+                            ? _buildSelectAnswer(questionId, answer)
+                            : answer.type == AnswerType.INPUT
+                                ? _buildInputAnswer(questionId, answer)
+                                : answer.type == AnswerType.PRODUCT_LIST
+                                    ? _buildProductListAnswer(
+                                        questionId, answer)
+                                    : _buildOptionAnswer(questionId, answer),
+                      ))
+                  .toList()
+                  .cast<Widget>(),
         ),
+      );
+
+  List<Widget> _buildAnswerWithImages(String questionId, List<Answer> answers) {
+    List<Widget> widgets = [];
+    List<Answer> answersWithImage = answers
+        .where((answer) => answer.type == AnswerType.IMAGE_OPTION)
+        .toList();
+    List<Answer> answersWithoutImages =
+        answers.where((answer) => answer.type == AnswerType.OPTION).toList();
+
+    widgets.add(CarouselSlider(
+      options: CarouselOptions(
+        autoPlay: true,
+        aspectRatio: 2.0,
+        enlargeCenterPage: true,
+      ),
+      items: answersWithImage
+          .map((answer) => _buildImageCard(questionId, answer))
+          .cast<Widget>()
+          .toList(),
+    ));
+
+    widgets.addAll(answersWithoutImages
+        .map((answer) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: _buildOptionAnswer(questionId, answer),
+            ))
+        .cast<Widget>()
+        .toList());
+
+    return widgets;
+  }
+
+  Widget _buildImageCard(String questionId, Answer answer) =>
+      CachedNetworkImage(
+        useOldImageOnUrlChange: true,
+        imageUrl: answer.imageUrl,
+        placeholder: (_, __) => Card(
+          child: Container(
+            width: MediaQuery.of(context).size.width / 2 + 32.0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  MdiIcons.fileAlert,
+                  color: Colors.black26,
+                  size: 32.0,
+                ),
+                SizedBox(height: 8.0),
+                // TODO TRANSLATE
+                Text(
+                  "Unable to download image",
+                  style: Theme.of(context).textTheme.subtitle2,
+                ),
+              ],
+            ),
+          ),
+        ),
+        errorWidget: (_, __, ___) => Card(
+          child: Container(
+            width: MediaQuery.of(context).size.width / 2 + 32.0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  MdiIcons.fileAlert,
+                  color: Colors.black26,
+                  size: 32.0,
+                ),
+                SizedBox(height: 8.0),
+                // TODO TRANSLATE
+                Text(
+                  "Unable to download image",
+                  style: Theme.of(context).textTheme.subtitle2,
+                ),
+              ],
+            ),
+          ),
+        ),
+        imageBuilder: (context, image) {
+          return Card(
+            child: Container(
+              width: MediaQuery.of(context).size.width / 2 + 32.0,
+              child: Stack(
+                children: [
+                  Material(
+                    child: Ink.image(
+                      image: image,
+                      child: InkWell(
+                        splashColor: Color(0x40FFC107),
+                        highlightColor: Color(0x20FFC107),
+                        onTap: () => widget._setValue(answer, answer.value),
+                      ),
+                    ),
+                  ),
+                  widget._isSelected(questionId, answer)
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: secondaryMain.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
+                          child: Align(
+                            alignment: Alignment.bottomRight,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.check_circle_outline,
+                                size: 32.0,
+                                color: secondaryMain,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
+                ],
+              ),
+            ),
+          );
+        },
       );
 
   Widget _buildSelectAnswer(String questionId, Answer answer) =>
@@ -327,7 +450,8 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         ),
       );
 
-  Widget _buildImageAnswer(String questionId, Answer answer) => CarouselSlider(
+  Widget _buildProductListAnswer(String questionId, Answer answer) =>
+      CarouselSlider(
         options: CarouselOptions(
           autoPlay: true,
           aspectRatio: 2.0,
@@ -474,11 +598,4 @@ enum ButtonStatus {
   NEXT,
   FINISH,
   RESTART,
-}
-
-enum AnswerType {
-  SELECT,
-  OPTION,
-  INPUT,
-  PRODUCT_LIST,
 }

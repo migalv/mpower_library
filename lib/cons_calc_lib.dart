@@ -19,6 +19,6 @@ export './src/load_category_page.dart';
 export './src/load_list_page.dart';
 export './src/panel_battery_card.dart';
 export './src/power_card.dart';
-export './src/question_card_carousel.dart';
+export './src/question_card.dart';
 export './src/theme.dart';
-export './src/title_list.dart';
+export './src/title_form.dart';

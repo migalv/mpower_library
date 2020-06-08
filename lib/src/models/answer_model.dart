@@ -1,5 +1,3 @@
-import 'package:cons_calc_lib/cons_calc_lib.dart';
-
 class Answer {
   final String id;
   final AnswerType type;

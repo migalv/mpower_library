@@ -22,10 +22,6 @@ class DynamicFormUIBloc {
   ValueObservable<List<String>> get previousQuestions =>
       _previousQuestionsController.stream;
   ValueObservable<DynamicForm> get currentForm => _currentFormController.stream;
-  ValueObservable<double> get currentCardPage =>
-      _currentCardPageController.stream;
-  Stream<double> get currentTitlePage => _currentTitlePageController.stream;
-  ValueObservable<List<String>> get titles => _titlesController.stream;
   Stream<List<DynamicForm>> get forms => _formsController.stream;
   Stream<bool> get isKeyboardVisible => _isKeyboardVisibleController.stream;
 
@@ -70,9 +66,6 @@ class DynamicFormUIBloc {
     _currentQuestionController.add(initialForm.questions.first);
     _formResults = [];
     _currentFormIndex = 0;
-    _subscription = forms.listen((event) {
-      _updateTitleList();
-    });
   }
 
   // METHODS
@@ -252,12 +245,6 @@ class DynamicFormUIBloc {
       currentFormResults.value != null &&
       currentFormResults.value[questionId] != null &&
       answer.id == currentFormResults.value[questionId][Answer.ID];
-
-  void _updateTitleList() {
-    List<String> list = titles.value;
-    list.add(_forms[_currentFormIndex].title);
-    _titlesController.add(list);
-  }
 
   bool isBackButtonVisible() =>
       _previousQuestionsController.value?.isNotEmpty ?? false;

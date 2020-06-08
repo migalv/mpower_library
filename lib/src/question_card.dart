@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
@@ -8,144 +6,120 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-class QuestionCardCarousel extends StatefulWidget {
-  final _currentCardPage, _currentTitlePage;
-  final PageController _cardController, _titlesController;
-  final bool _isWeb;
-  final _form;
-  final _nextButtonStatus;
-  final _currentQuestion;
-  final Function _isBackButtonVisible,
-      _isSelected,
-      _setValue,
-      _goToPreviousQuestion,
-      _goToNextQuestion,
-      _finishAndSaveForm,
-      _saveAndRestartForm;
-  final Stream<bool> _isKeyboardVisible;
+class QuestionCard extends StatefulWidget {
+  final bool isWeb;
+  final ButtonStatus nextButtonStatus;
+  final Question question;
+  final Function isBackButtonVisible,
+      isSelected,
+      setValue,
+      goToPreviousQuestion,
+      goToNextQuestion,
+      finishAndSaveForm,
+      saveAndRestartForm;
+  final Stream<Question> currentQuestionStream;
+  final double cardSize;
+  final bool isKeyboardVisible;
 
-  QuestionCardCarousel({
-    @required currentCardPage,
-    @required currentTitlePage,
-    @required cardController,
-    @required titlesController,
-    @required isWeb,
-    @required form,
-    @required nextButtonStatus,
-    @required currentQuestion,
-    @required isBackButtonVisible,
-    @required isSelected,
-    @required setValue,
-    @required finishAndSaveForm,
-    @required goToPreviousQuestion,
-    @required goToNextQuestion,
-    @required saveAndRestartForm,
-    @required isKeyboardVisible,
-  })  : _form = form,
-        _cardController = cardController,
-        _currentTitlePage = currentTitlePage,
-        _isWeb = isWeb,
-        _currentCardPage = currentCardPage,
-        _nextButtonStatus = nextButtonStatus,
-        _currentQuestion = currentQuestion,
-        _isBackButtonVisible = isBackButtonVisible,
-        _isSelected = isSelected,
-        _goToPreviousQuestion = goToPreviousQuestion,
-        _goToNextQuestion = goToNextQuestion,
-        _finishAndSaveForm = finishAndSaveForm,
-        _setValue = setValue,
-        _titlesController = titlesController,
-        _saveAndRestartForm = saveAndRestartForm,
-        _isKeyboardVisible = isKeyboardVisible;
+  QuestionCard({
+    @required this.question,
+    @required this.isWeb,
+    @required this.nextButtonStatus,
+    @required this.isBackButtonVisible,
+    @required this.isSelected,
+    @required this.setValue,
+    @required this.finishAndSaveForm,
+    @required this.goToPreviousQuestion,
+    @required this.goToNextQuestion,
+    @required this.saveAndRestartForm,
+    @required this.currentQuestionStream,
+    @required this.cardSize,
+    @required this.isKeyboardVisible,
+  });
 
   @override
-  _QuestionCardCarouselState createState() => _QuestionCardCarouselState();
+  _QuestionCardState createState() => _QuestionCardState();
 }
 
-class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
-  final padding = 18.0;
-
+class _QuestionCardState extends State<QuestionCard> {
   final verticalInset = 18.0;
+  final padding = 18.0;
   Map<String, TextEditingController> textFieldControllers = {};
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<bool>(
-        stream: widget._isKeyboardVisible,
-        initialData: false,
-        builder: (context, isKeyboardVisibleSnapshot) {
-          return LayoutBuilder(
-            builder: (context, contraints) {
-              List<Widget> children = [];
+    return StreamBuilder<Question>(
+        stream: widget.currentQuestionStream,
+        builder: (context, snapshot) {
+          Question currentQuestion = snapshot.data;
+          if (currentQuestion == null) return Container();
+          double bottom = padding;
+          double left = padding;
 
-              for (var i = 0; i < widget._form.questions.length; i++) {
-                var delta = i - widget._currentCardPage;
-                bool isOnRight = delta > 0;
+          bool isCurrentQuestion =
+              widget.question.index == currentQuestion.index;
+          bool isNextQuestion = widget.question.index > currentQuestion.index;
+          int questionDifference =
+              currentQuestion.index - widget.question.index;
+          double opacity = 1.0;
 
-                var start = padding +
-                    (widget._isWeb
-                        ? max(20 - 50 * -delta * (isOnRight ? 90 : 1), 0.0)
-                        : max(20 - 20 * -delta * (isOnRight ? 18 : 1), 0.0));
-
-                var elevation =
-                    MAX_ELEVATION - max(-MAX_ELEVATION * delta, 0.0);
-                var opacity = MAX_OPACITY - max(-delta, 0.0);
-
-                children.add(
-                  Positioned.directional(
-                    textDirection: TextDirection.ltr,
-                    top: MediaQuery.of(context).size.height * .45 +
-                        verticalInset * max(-delta, 0.0) -
-                        (isKeyboardVisibleSnapshot.data ? 160.0 : 0.0),
-                    bottom: padding + verticalInset * max(-delta, 0.0),
-                    start: start,
-                    child: Opacity(
-                      opacity: opacity < MIN_OPACITY ? MIN_OPACITY : opacity,
-                      child: Material(
-                        color: Colors.transparent,
-                        elevation: elevation < 0 ? 0 : elevation,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            color: Colors.white,
-                            width: MediaQuery.of(context).size.width - 70,
-                            child: Opacity(
-                              opacity: opacity < 0 ? 0 : opacity,
-                              child: Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    _question(),
-                                    _buildButtonsRow(),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+          if (isCurrentQuestion) {
+            left =
+                MediaQuery.of(context).size.width / 2 - (widget.cardSize / 2);
+          } else if (isNextQuestion) {
+            left = MediaQuery.of(context).size.width - verticalInset;
+          } else if (questionDifference == 1) {
+            bottom -= verticalInset * questionDifference;
+            opacity = 0.7;
+          } else if (questionDifference == 2) {
+            bottom -= verticalInset * questionDifference;
+            opacity = 0.5;
+          } else if (questionDifference == 3) {
+            bottom -= verticalInset * questionDifference;
+            opacity = 0.3;
+          } else if (questionDifference > 3) {
+            bottom -= verticalInset * 3;
+            opacity = 0.0;
+          }
+          return AnimatedPositioned(
+            left: left,
+            bottom: bottom,
+            duration: Duration(milliseconds: 400),
+            child: AnimatedOpacity(
+              opacity: opacity,
+              duration: Duration(milliseconds: 400),
+              child: Material(
+                borderRadius: BorderRadius.circular(8.0),
+                color: Colors.white,
+                elevation: isCurrentQuestion ? MAX_ELEVATION : 0.0,
+                child: Container(
+                  width: widget.cardSize,
+                  height: widget.cardSize -
+                      (widget.isKeyboardVisible ? 160.0 : 0.0),
+                  child: Column(
+                    children: [
+                      _question(),
+                      isCurrentQuestion ? _buildButtonsRow() : Container(),
+                    ],
                   ),
-                );
-              }
-
-              return Stack(
-                fit: StackFit.expand,
-                children: children,
-              );
-            },
+                ),
+              ),
+            ),
           );
         });
   }
 
-  Widget _buildButtonsRow() => Stack(
-        children: [
-          _backButton(),
-          _nextButton(),
-        ],
+  Widget _buildButtonsRow() => Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Stack(
+          children: [
+            _backButton(),
+            _nextButton(),
+          ],
+        ),
       );
 
-  Widget _backButton() => widget._isBackButtonVisible()
+  Widget _backButton() => widget.isBackButtonVisible()
       ? Align(
           alignment: Alignment.bottomLeft,
           child: IconButton(
@@ -153,15 +127,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
               Icons.arrow_back,
               color: Colors.black45,
             ),
-            onPressed: () {
-              widget._goToPreviousQuestion();
-
-              widget._cardController.animateToPage(
-                widget._currentCardPage.truncate() - 1,
-                duration: Duration(milliseconds: 400),
-                curve: Curves.easeInOut,
-              );
-            },
+            onPressed: () => widget.goToPreviousQuestion(),
           ),
         )
       : Container();
@@ -170,10 +136,10 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         alignment: Alignment.bottomCenter,
         child: FlatButton(
           color: secondaryMain,
-          onPressed: widget._nextButtonStatus == ButtonStatus.DISABLED
+          onPressed: widget.nextButtonStatus == ButtonStatus.DISABLED
               ? null
               : () {
-                  switch (widget._nextButtonStatus) {
+                  switch (widget.nextButtonStatus) {
                     case ButtonStatus.NEXT:
                       _nextQuestion();
                       break;
@@ -192,26 +158,25 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
       );
 
   Widget _question() => Expanded(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: widget._currentQuestion == null
-              ? Container()
-              : Column(
-                  children: [
-                    Text(
-                      widget._currentQuestion.label['en'],
+        child: widget.question == null
+            ? Container()
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 8.0),
+                    child: Text(
+                      widget.question.label['en'],
                       style: Theme.of(context).textTheme.subtitle1,
                     ),
-                    _answers(widget._currentQuestion.id,
-                        widget._currentQuestion.answers)
-                  ],
-                ),
-        ),
+                  ),
+                  _answers(widget.question.id, widget.question.answers)
+                ],
+              ),
       );
 
   Widget _answers(String questionId, List<Answer> answers) => Expanded(
         child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24.0),
           children: answers
                   .any((answer) => answer.type == AnswerType.IMAGE_OPTION)
               ? _buildAnswerWithImages(questionId, answers)
@@ -321,11 +286,11 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                       child: InkWell(
                         splashColor: Color(0x40FFC107),
                         highlightColor: Color(0x20FFC107),
-                        onTap: () => widget._setValue(answer, answer.value),
+                        onTap: () => widget.setValue(answer, answer.value),
                       ),
                     ),
                   ),
-                  widget._isSelected(questionId, answer)
+                  widget.isSelected(questionId, answer)
                       ? Container(
                           decoration: BoxDecoration(
                             color: secondaryMain.withOpacity(0.3),
@@ -356,8 +321,8 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
         selectedColor: secondaryMain,
         title: Text(answer.label['en']),
         onExpansionChanged: (expanded) =>
-            expanded ? widget._setValue(answer, answer.value[0]) : null,
-        initiallyExpanded: widget._isSelected(questionId, answer),
+            expanded ? widget.setValue(answer, answer.value[0]) : null,
+        initiallyExpanded: widget.isSelected(questionId, answer),
         children: [
           Container(
             height: MediaQuery.of(context).size.height / 5,
@@ -366,7 +331,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
               magnification: 1.5,
               itemExtent: 25,
               onSelectedItemChanged: (int index) {
-                widget._setValue(answer, answer.value[index]);
+                widget.setValue(answer, answer.value[index]);
               },
               children: answer.value
                   .map(
@@ -391,7 +356,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Material(
-        color: widget._isSelected(questionId, answer)
+        color: widget.isSelected(questionId, answer)
             ? Color(0x20FFC107)
             : Theme.of(context).canvasColor,
         child: Padding(
@@ -408,9 +373,9 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                   .subtitle2
                   .copyWith(fontWeight: FontWeight.w600, color: Colors.black45),
             ),
-            onChanged: (text) => widget._setValue(answer, text),
+            onChanged: (text) => widget.setValue(answer, text),
             onTap: () =>
-                widget._setValue(answer, textFieldControllers[answer.id].text),
+                widget.setValue(answer, textFieldControllers[answer.id].text),
           ),
         ),
       ),
@@ -420,17 +385,17 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
   Widget _buildOptionAnswer(String questionId, Answer answer) => ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Material(
-          color: widget._isSelected(questionId, answer)
+          color: widget.isSelected(questionId, answer)
               ? Color(0x20FFC107)
               : Theme.of(context).canvasColor,
           child: InkWell(
             onTap: () {
-              widget._setValue(answer, answer.value);
+              widget.setValue(answer, answer.value);
             },
-            splashColor: widget._isSelected(questionId, answer)
+            splashColor: widget.isSelected(questionId, answer)
                 ? Color(0x40FFC107)
                 : null,
-            highlightColor: widget._isSelected(questionId, answer)
+            highlightColor: widget.isSelected(questionId, answer)
                 ? Color(0x20FFC107)
                 : null,
             child: Container(
@@ -440,7 +405,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                 answer.label['en'],
                 style: Theme.of(context).textTheme.subtitle2.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: widget._isSelected(questionId, answer)
+                      color: widget.isSelected(questionId, answer)
                           ? secondaryMain
                           : Colors.black45,
                     ),
@@ -464,7 +429,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
       );
 
   Widget _buildProductCard(dynamic product) => Container(
-        width: 184.0,
+        width: 264.0,
         margin: const EdgeInsets.only(right: 8.0),
         child: Card(
           clipBehavior: Clip.antiAlias,
@@ -474,7 +439,7 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
           child: Column(
             children: <Widget>[
               Container(
-                height: 74.0,
+                height: 98.0,
                 width: 184.0,
                 child: isValidURL(product.imageURL)
                     ? CachedNetworkImage(
@@ -496,18 +461,13 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
                 height: 1.0,
                 color: Colors.black38,
               ),
-              Container(
-                height: 32.0,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Container(
-                  alignment: Alignment.bottomCenter,
-                  height: 24.0,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 8.0),
                   child: AutoSizeText(
                     product.name,
                     minFontSize: 12.0,
-                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: 'LibreFranklin',
@@ -525,18 +485,12 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
       );
 
   // METHODS
-  void _nextQuestion() {
-    widget._goToNextQuestion();
+  void _nextQuestion() => widget.goToNextQuestion();
 
-    widget._cardController.animateToPage(
-      widget._currentCardPage.truncate() + 1,
-      duration: Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
+  void _restartForm() => widget.saveAndRestartForm();
 
   void _finishForm() async {
-    var consumptionProducts = await widget._finishAndSaveForm();
+    var consumptionProducts = await widget.finishAndSaveForm();
 
     // TODO Revisar
     // if (consumptionProducts.isNotEmpty) {
@@ -552,28 +506,6 @@ class _QuestionCardCarouselState extends State<QuestionCardCarousel> {
     //   );
     // }
     // }
-
-    // TODO No animar si no hay mas cartas despues
-    widget._cardController.animateToPage(
-      widget._currentCardPage.truncate() + 1,
-      duration: Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-    widget._titlesController.animateToPage(
-      widget._currentTitlePage.truncate() + 1,
-      duration: Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _restartForm() {
-    widget._saveAndRestartForm();
-
-    widget._cardController.animateToPage(
-      widget._currentCardPage.truncate() + 1,
-      duration: Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
   }
 
   bool isValidURL(String url) {

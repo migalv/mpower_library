@@ -91,7 +91,10 @@ class _QuestionCardState extends State<QuestionCard> {
               child: Material(
                 borderRadius: BorderRadius.circular(8.0),
                 color: Colors.white,
-                elevation: isCurrentQuestion ? MAX_ELEVATION : 0.0,
+                elevation: isCurrentQuestion ||
+                        widget.question.index == currentQuestion.index + 1
+                    ? MAX_ELEVATION
+                    : 0.0,
                 child: Container(
                   width: widget.cardSize,
                   height: widget.cardSize -

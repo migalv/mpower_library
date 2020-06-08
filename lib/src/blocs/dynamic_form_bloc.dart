@@ -9,7 +9,6 @@ class DynamicFormUIBloc {
   List<DynamicForm> _forms;
   List<Map> _formResults;
   int _currentFormIndex;
-  StreamSubscription _subscription;
   Function _getDynamicFormWithId, _getConsumptionProduct;
 
   // Streams
@@ -86,125 +85,120 @@ class DynamicFormUIBloc {
 
   void nextQuestion() {
     // Delayed to avoid an animation flaw
-    Future.delayed(Duration(milliseconds: 200), () {
-      _previousQuestionsController
-          .add(previousQuestions.value..add(currentQuestion.value.id));
 
-      Question question = currentForm.value.questions.singleWhere(
-        (q) => q.id == _currentAnswer.nextQuestionId,
-        orElse: () => null,
-      );
-      _currentQuestionController.add(question);
+    _previousQuestionsController
+        .add(previousQuestions.value..add(currentQuestion.value.id));
 
-      _updateButtonStatus();
-    });
+    Question question = currentForm.value.questions.singleWhere(
+      (q) => q.id == _currentAnswer.nextQuestionId,
+      orElse: () => null,
+    );
+    _currentQuestionController.add(question);
+
+    _updateButtonStatus();
   }
 
   void saveAndRestartForm() {
-    Future.delayed(Duration(milliseconds: 200), () {
-      _formResults.add(currentFormResults.value);
-      _previousQuestionsController.add([]);
-      _currentQuestionController.add(currentForm.value.questions
-          .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
-      _currentFormResultsController.add(null);
+    _formResults.add(currentFormResults.value);
+    _previousQuestionsController.add([]);
+    _currentQuestionController.add(currentForm.value.questions
+        .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
+    _currentFormResultsController.add(null);
 
-      _updateButtonStatus();
-    });
+    _updateButtonStatus();
   }
 
   Future<List<ConsumptionProduct>> finishAndSaveForm() async {
     List<ConsumptionProduct> consumptionProducts = [];
 
     // Delay to avoid an animation flaw
-    await Future.delayed(Duration(milliseconds: 200), () async {
-      _formResults.add(currentFormResults.value);
+    _formResults.add(currentFormResults.value);
 
-      for (Map answerData in currentFormResults.value.values) {
-        if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
-          if (answerData["value"] is String)
-            _forms.add(_getDynamicFormWithId(answerData["value"]));
-          else if (answerData["value"] is List)
-            for (String formId in answerData["value"])
-              _forms.add(_getDynamicFormWithId(formId));
+    for (Map answerData in currentFormResults.value.values) {
+      if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
+        if (answerData["value"] is String)
+          _forms.add(_getDynamicFormWithId(answerData["value"]));
+        else if (answerData["value"] is List)
+          for (String formId in answerData["value"])
+            _forms.add(_getDynamicFormWithId(formId));
 
-          _formsController.add(_forms);
-        }
+        _formsController.add(_forms);
       }
+    }
 
-      // There are more forms to show
-      if (_forms.length > _currentFormIndex + 1) {
-        _currentFormIndex++;
-        _previousQuestionsController.add([]);
-        _currentFormController.add(_forms[_currentFormIndex]);
-        _currentQuestionController.add(currentForm.value.questions.first);
-        _currentFormResultsController.add(null);
+    // There are more forms to show
+    if (_forms.length > _currentFormIndex + 1) {
+      _currentFormIndex++;
+      _previousQuestionsController.add([]);
 
-        _updateButtonStatus();
-      } else {
-        // It's the last form
-        double extraConsumption = 0.0;
+      _currentFormController.add(_forms[_currentFormIndex]);
+      _currentQuestionController.add(currentForm.value.questions.first);
+      _currentFormResultsController.add(null);
 
-        // For each form we recollect the answers for the consumption questions
-        for (Map questionsMap in _formResults) {
-          int units;
-          // We store the atributes to filter the consumption products
-          List filters = [];
-          questionsMap.forEach(
-            (questionId, answersMap) {
-              if (answersMap['question_purpose'] ==
-                      QuestionPurpose.CONSUMPTION &&
-                  answersMap['value'] != null &&
-                  answersMap['key'] != null) {
-                var value = answersMap['value'];
-                if (answersMap[Question.TABLE_ID] == Question.JUST_VALUE)
-                  extraConsumption += value;
-                else {
-                  // Transform number range into its mean
-                  if (value is String &&
-                      value.contains('-') &&
-                      !value.contains(' - ')) {
-                    int floor =
-                        int.tryParse(value.substring(0, value.indexOf('-')));
-                    int ceil = int.tryParse(
-                        value.substring(value.indexOf('-') + 1, value.length));
+      _updateButtonStatus();
+    } else {
+      // It's the last form
+      double extraConsumption = 0.0;
 
-                    if (floor != null && ceil != null)
-                      answersMap['value'] =
-                          ((floor + ceil) / 2).toStringAsFixed(0);
-                  }
-                  filters.add(answersMap);
+      // For each form we recollect the answers for the consumption questions
+      for (Map questionsMap in _formResults) {
+        int units;
+        // We store the atributes to filter the consumption products
+        List filters = [];
+        questionsMap.forEach(
+          (questionId, answersMap) {
+            if (answersMap['question_purpose'] == QuestionPurpose.CONSUMPTION &&
+                answersMap['value'] != null &&
+                answersMap['key'] != null) {
+              var value = answersMap['value'];
+              if (answersMap[Question.TABLE_ID] == Question.JUST_VALUE)
+                extraConsumption += value;
+              else {
+                // Transform number range into its mean
+                if (value is String &&
+                    value.contains('-') &&
+                    !value.contains(' - ')) {
+                  int floor =
+                      int.tryParse(value.substring(0, value.indexOf('-')));
+                  int ceil = int.tryParse(
+                      value.substring(value.indexOf('-') + 1, value.length));
+
+                  if (floor != null && ceil != null)
+                    answersMap['value'] =
+                        ((floor + ceil) / 2).toStringAsFixed(0);
                 }
-              } else if (answersMap['question_purpose'] ==
-                      QuestionPurpose.NUM_OF_UNITS &&
-                  answersMap['value'] != null) units = answersMap["value"];
-            },
-          );
-
-          if (filters.isNotEmpty) {
-            ConsumptionProduct consumptionProduct =
-                await _getConsumptionProduct(filters);
-            // If there are multiple units of the same product we add them as SubProducts
-            if (units != null) {
-              consumptionProduct.subProducts = [];
-              for (int i = 0; i < units - 1; i++) {
-                // -1 because we already have 1 unit added
-                consumptionProduct.subProducts.add(
-                  ConsumptionSubProduct(
-                    id: consumptionProduct.id,
-                    name: consumptionProduct.name,
-                    powerConsumption: consumptionProduct.powerConsumption,
-                  ),
-                );
+                filters.add(answersMap);
               }
-            }
+            } else if (answersMap['question_purpose'] ==
+                    QuestionPurpose.NUM_OF_UNITS &&
+                answersMap['value'] != null) units = answersMap["value"];
+          },
+        );
 
-            consumptionProducts.add(consumptionProduct);
-            consumptionProducts[consumptionProducts.length - 1]
-                .powerConsumption += extraConsumption;
+        if (filters.isNotEmpty) {
+          ConsumptionProduct consumptionProduct =
+              await _getConsumptionProduct(filters);
+          // If there are multiple units of the same product we add them as SubProducts
+          if (units != null) {
+            consumptionProduct.subProducts = [];
+            for (int i = 0; i < units - 1; i++) {
+              // -1 because we already have 1 unit added
+              consumptionProduct.subProducts.add(
+                ConsumptionSubProduct(
+                  id: consumptionProduct.id,
+                  name: consumptionProduct.name,
+                  powerConsumption: consumptionProduct.powerConsumption,
+                ),
+              );
+            }
           }
+
+          consumptionProducts.add(consumptionProduct);
+          consumptionProducts[consumptionProducts.length - 1]
+              .powerConsumption += extraConsumption;
         }
       }
-    });
+    }
 
     return consumptionProducts;
   }
@@ -226,15 +220,13 @@ class DynamicFormUIBloc {
       _isKeyboardVisibleController.add(isVisible);
 
   void goToPreviousQuestion() {
-    Future.delayed(Duration(milliseconds: 200), () {
-      _currentQuestionController.add(currentForm.value.questions.singleWhere(
-          (q) => q.id == _previousQuestionsController.value.last,
-          orElse: () => null));
-      _previousQuestionsController
-          .add(_previousQuestionsController.value..removeLast());
+    _currentQuestionController.add(currentForm.value.questions.singleWhere(
+        (q) => q.id == _previousQuestionsController.value.last,
+        orElse: () => null));
+    _previousQuestionsController
+        .add(_previousQuestionsController.value..removeLast());
 
-      _updateButtonStatus();
-    });
+    _updateButtonStatus();
   }
 
   void setCurrentPage(double page, {bool card = true}) {
@@ -260,7 +252,5 @@ class DynamicFormUIBloc {
     _titlesController.close();
     _formsController.close();
     _isKeyboardVisibleController.close();
-
-    _subscription.cancel();
   }
 }

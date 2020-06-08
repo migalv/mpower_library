@@ -68,7 +68,9 @@ class DynamicFormUI extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: titles.length > 3
                   ? titles
-                      .getRange(currentFormIndex - 3, currentFormIndex)
+                      .getRange(
+                          currentFormIndex - 3 < 0 ? 0 : currentFormIndex - 3,
+                          currentFormIndex)
                       .toList()
                   : titles,
             ),

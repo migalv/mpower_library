@@ -194,8 +194,7 @@ class DynamicFormUIBloc {
           }
 
           consumptionProducts.add(consumptionProduct);
-          consumptionProducts[consumptionProducts.length - 1]
-              .powerConsumption += extraConsumption;
+          // TODO ADD THE EXTRA CONSUMPTION
         }
       }
     }
@@ -220,6 +219,7 @@ class DynamicFormUIBloc {
       _isKeyboardVisibleController.add(isVisible);
 
   void goToPreviousQuestion() {
+    // TODO REMOVE THE ANSWER FROM THE CURRENT QUESTION
     _currentQuestionController.add(currentForm.value.questions.singleWhere(
         (q) => q.id == _previousQuestionsController.value.last,
         orElse: () => null));

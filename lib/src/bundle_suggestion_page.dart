@@ -91,7 +91,7 @@ class BundleSuggestionPage extends StatelessWidget {
             children: [
               // Bundle Name
               Padding(
-                padding: EdgeInsets.only(left: 32, top: 16.0),
+                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
                 child: Text(
                   productBundle.name,
                   style: Theme.of(context).textTheme.headline6,
@@ -124,8 +124,7 @@ class BundleSuggestionPage extends StatelessWidget {
                       ],
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 8.0),
+                      padding: const EdgeInsets.only(top: 8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: batteries
@@ -139,6 +138,7 @@ class BundleSuggestionPage extends StatelessWidget {
                             .toList(),
                       ),
                     ),
+                    SizedBox(height: 8.0),
                     // PANELS
                     Row(
                       children: [
@@ -159,8 +159,7 @@ class BundleSuggestionPage extends StatelessWidget {
                       ],
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 8.0),
+                      padding: const EdgeInsets.only(top: 8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: panels
@@ -177,14 +176,9 @@ class BundleSuggestionPage extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Price
               Padding(
-                padding: const EdgeInsets.fromLTRB(0.0, 8.0, 16.0, 16.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 32.0),
                 child: Row(
-                  // mainAxisAlignment: MainAxisAlignment.end,
-                  // crossAxisAlignment: CrossAxisAlignment.baseline,
-                  // textBaseline: TextBaseline.alphabetic,
                   children: [
                     // Recommendation chip
                     Container(
@@ -194,8 +188,6 @@ class BundleSuggestionPage extends StatelessWidget {
                       ),
                       padding:
                           EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      margin:
-                          EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -215,6 +207,7 @@ class BundleSuggestionPage extends StatelessWidget {
                       ),
                     ),
                     Expanded(child: Container()),
+                    // Price
                     Text(
                       productBundle.price.toString(),
                       style: Theme.of(context).textTheme.headline4.copyWith(
@@ -311,11 +304,6 @@ class BundleSuggestionPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  double _getScale(int index, double currentPage) {
-    double scale = 1 - (currentPage - index).abs() * .2;
-    return scale < .9 ? .9 : scale;
   }
 
   BoxShadow _getShadow(int index, double currentPage) {

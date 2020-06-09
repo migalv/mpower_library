@@ -426,12 +426,13 @@ class _QuestionCardState extends State<QuestionCard> {
           enlargeCenterPage: true,
         ),
         items: answer.value
-            .map((product) => _buildProductCard(product))
+            .map((product) => _buildProductCard(product, questionId, answer))
             .cast<Widget>()
             .toList(),
       );
 
-  Widget _buildProductCard(dynamic product) => Container(
+  Widget _buildProductCard(dynamic product, String questionId, Answer answer) =>
+      Container(
         width: 264.0,
         margin: const EdgeInsets.only(right: 8.0),
         child: Card(
@@ -439,49 +440,75 @@ class _QuestionCardState extends State<QuestionCard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
           ),
-          child: Column(
-            children: <Widget>[
-              Container(
-                height: 98.0,
-                width: 184.0,
-                child: isValidURL(product.imageURL)
-                    ? CachedNetworkImage(
-                        useOldImageOnUrlChange: true,
-                        imageUrl: product.imageURL,
-                        placeholder: (_, __) => Icon(
-                          MdiIcons.tag,
-                          color: Colors.black26,
-                          size: 32.0,
-                        ),
-                      )
-                    : Icon(
-                        MdiIcons.tag,
-                        color: Colors.black26,
-                        size: 32.0,
-                      ),
-              ),
-              Divider(
-                height: 1.0,
-                color: Colors.black38,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, vertical: 8.0),
-                  child: AutoSizeText(
-                    product.name,
-                    minFontSize: 12.0,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'LibreFranklin',
-                      fontWeight: FontWeight.w500,
-                      fontSize: 19.94,
-                      letterSpacing: 0.25,
-                      color: Colors.black87,
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: () => widget.setValue(answer, product),
+                child: Column(
+                  children: <Widget>[
+                    Container(
+                      height: 98.0,
+                      width: 184.0,
+                      child: isValidURL(product.imageURL)
+                          ? CachedNetworkImage(
+                              useOldImageOnUrlChange: true,
+                              imageUrl: product.imageURL,
+                              placeholder: (_, __) => Icon(
+                                MdiIcons.tag,
+                                color: Colors.black26,
+                                size: 32.0,
+                              ),
+                            )
+                          : Icon(
+                              MdiIcons.tag,
+                              color: Colors.black26,
+                              size: 32.0,
+                            ),
                     ),
-                  ),
+                    Divider(
+                      height: 1.0,
+                      color: Colors.black38,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 8.0),
+                        child: AutoSizeText(
+                          product.name,
+                          minFontSize: 12.0,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'LibreFranklin',
+                            fontWeight: FontWeight.w500,
+                            fontSize: 19.94,
+                            letterSpacing: 0.25,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              widget.isSelected(questionId, answer, value: product)
+                  ? Container(
+                      decoration: BoxDecoration(
+                        color: secondaryMain.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.check_circle_outline,
+                            size: 32.0,
+                            color: secondaryMain,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(),
             ],
           ),
         ),

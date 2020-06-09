@@ -84,8 +84,6 @@ class DynamicFormUIBloc {
   }
 
   void nextQuestion() {
-    // Delayed to avoid an animation flaw
-
     _previousQuestionsController
         .add(previousQuestions.value..add(currentQuestion.value.id));
 
@@ -108,10 +106,9 @@ class DynamicFormUIBloc {
     _updateButtonStatus();
   }
 
-  Future<List<ConsumptionProduct>> finishAndSaveForm() async {
-    List<ConsumptionProduct> consumptionProducts = [];
+  Future<List> finishAndSaveForm() async {
+    List consumptionProducts = [];
 
-    // Delay to avoid an animation flaw
     _formResults.add(currentFormResults.value);
 
     for (Map answerData in currentFormResults.value.values) {
@@ -172,6 +169,14 @@ class DynamicFormUIBloc {
             } else if (answersMap['question_purpose'] ==
                     QuestionPurpose.NUM_OF_UNITS &&
                 answersMap['value'] != null) units = answersMap["value"];
+
+            // If the user selected a product we add it to the list
+            if (answersMap['question_purpose'] ==
+                    QuestionPurpose.PRODUCT_SELECTION &&
+                answersMap['value'] != null &&
+                answersMap['key'] != null) {
+              consumptionProducts.add(answersMap['value']);
+            }
           },
         );
 
@@ -229,14 +234,21 @@ class DynamicFormUIBloc {
     _updateButtonStatus();
   }
 
-  void setCurrentPage(double page, {bool card = true}) {
-    (card ? _currentCardPageController : _currentTitlePageController).add(page);
-  }
+  /// Returns true if answer is the one currently selected
+  /// optional parameter "value", if not null checks if the value of the answer
+  /// is the same as the parameter "value"
+  bool isSelected(String questionId, Answer answer, {dynamic value}) {
+    if (currentFormResults.value != null &&
+        currentFormResults.value[questionId] != null &&
+        answer.id == currentFormResults.value[questionId][Answer.ID]) {
+      if (value != null) {
+        if (currentFormResults.value[questionId]['value'] == value) return true;
+      } else
+        return true;
+    }
 
-  bool isSelected(String questionId, Answer answer) =>
-      currentFormResults.value != null &&
-      currentFormResults.value[questionId] != null &&
-      answer.id == currentFormResults.value[questionId][Answer.ID];
+    return false;
+  }
 
   bool isBackButtonVisible() =>
       _previousQuestionsController.value?.isNotEmpty ?? false;

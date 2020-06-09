@@ -168,15 +168,14 @@ class DynamicFormUIBloc {
               }
             } else if (answersMap['question_purpose'] ==
                     QuestionPurpose.NUM_OF_UNITS &&
-                answersMap['value'] != null) units = answersMap["value"];
+                answersMap['value'] != null)
+              units = answersMap["value"];
 
             // If the user selected a product we add it to the list
-            if (answersMap['question_purpose'] ==
+            else if (answersMap['question_purpose'] ==
                     QuestionPurpose.PRODUCT_SELECTION &&
-                answersMap['value'] != null &&
-                answersMap['key'] != null) {
+                answersMap['value'] != null)
               consumptionProducts.add(answersMap['value']);
-            }
           },
         );
 

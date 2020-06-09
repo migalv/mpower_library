@@ -4,8 +4,8 @@ import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:cons_calc_lib/src/models/product_bundle_model.dart';
 
 class BundleSuggestionBloc {
-  List<ConsumptionProduct> customerProducts;
-  List<ConsumptionProduct> mPowerProducts;
+  final List<ConsumptionProduct> customerProducts;
+  final List<ConsumptionProduct> mPowerProducts;
 
   // Streams
   Stream<double> get currentPage => _currentPageController.stream;
@@ -17,8 +17,14 @@ class BundleSuggestionBloc {
   final _currentPageController = StreamController<double>.broadcast();
 
   BundleSuggestionBloc(
-      {List customerProducts, List mPowerProducts, getBundleRecommendations}) {
-    getBundleRecommendations(consumption)
+      {this.customerProducts, this.mPowerProducts, getBundleRecommendations}) {
+    double totalConsumption = 0.0;
+
+    customerProducts
+        .forEach((prod) => totalConsumption += prod.powerConsumption);
+    mPowerProducts.forEach((prod) => totalConsumption += prod.powerConsumption);
+
+    getBundleRecommendations(totalConsumption)
         .then((bundles) => _recommendedBundlesController.add(bundles));
   }
 

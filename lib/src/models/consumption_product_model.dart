@@ -8,6 +8,7 @@ class ConsumptionProduct {
   final String imageUrl;
   final IconData icon;
   bool expanded;
+  int get units => subProducts?.length ?? 1;
 
   ConsumptionProduct({
     this.day = 0,

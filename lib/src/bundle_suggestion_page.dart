@@ -4,23 +4,35 @@ import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:cons_calc_lib/src/blocs/bundle_suggestion_bloc.dart';
 import 'package:cons_calc_lib/src/models/product_bundle_model.dart';
 import 'package:cons_calc_lib/src/models/product_type.dart';
+import 'package:cons_calc_lib/src/review_page.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-TextTheme _textTheme;
-Size _size;
-
-class BundleSuggestionPage extends StatelessWidget {
+class BundleSuggestionPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    var bloc = Provider.of<BundleSuggestionBloc>(context);
-    final controller = PageController(viewportFraction: 1);
-    _textTheme = Theme.of(context).textTheme;
-    _size = MediaQuery.of(context).size;
+  _BundleSuggestionPageState createState() => _BundleSuggestionPageState();
+}
 
+class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
+  TextTheme _textTheme;
+  Size _size;
+  BundleSuggestionBloc bloc;
+  PageController controller;
+
+  @override
+  void didChangeDependencies() {
+    bloc = Provider.of<BundleSuggestionBloc>(context);
+    controller = PageController(viewportFraction: 1);
     controller.addListener(() {
       bloc.setCurrentPage(controller.page);
     });
+    super.didChangeDependencies();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _textTheme = Theme.of(context).textTheme;
+    _size = MediaQuery.of(context).size;
 
     return SafeArea(
       child: Scaffold(
@@ -179,6 +191,7 @@ class BundleSuggestionPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 32.0),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     // Recommendation chip
                     Container(
@@ -242,9 +255,18 @@ class BundleSuggestionPage extends StatelessWidget {
             ),
             child: Text(
               "Select",
-              style: Theme.of(context).textTheme.button,
+              style:
+                  Theme.of(context).textTheme.button.copyWith(fontSize: 18.0),
             ),
-            onPressed: () {},
+            onPressed: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ReviewPage(
+                    bundle: productBundle,
+                    customerProducts: bloc.customerProducts,
+                    mPowerProducts: bloc.mPowerProducts,
+                  ),
+                )),
           ),
         ),
       ],

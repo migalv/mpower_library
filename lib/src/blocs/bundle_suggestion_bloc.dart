@@ -20,8 +20,8 @@ class BundleSuggestionBloc {
       {this.customerProducts, this.mPowerProducts, getBundleRecommendations}) {
     double totalConsumption = 0.0;
 
-    customerProducts
-        .forEach((prod) => totalConsumption += prod.powerConsumption);
+    customerProducts.forEach(
+        (prod) => totalConsumption += prod.powerConsumption * prod.units);
     mPowerProducts.forEach((prod) => totalConsumption += prod.powerConsumption);
 
     getBundleRecommendations(totalConsumption)

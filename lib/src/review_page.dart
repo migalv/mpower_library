@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/material.dart';
@@ -20,26 +22,30 @@ class ReviewPage extends StatelessWidget {
       backgroundColor: Color(0xFF42515A),
       body: SafeArea(
         child: Stack(
+          alignment: Alignment.center,
           children: [
-            ListView(
-              padding: const EdgeInsets.all(24.0),
-              children: [
-                // Text("You search a solution for your"),
-                customerProducts?.isNotEmpty ?? false
-                    ? _buildTitle(context, "You search a solution for your")
-                    : Container(),
-                customerProducts?.isNotEmpty ?? false
-                    ? _buildProductList(context, customerProducts)
-                    : Container(),
-                mPowerProducts?.isNotEmpty ?? false
-                    ? _buildTitle(context, "And you would like a new MPower")
-                    : Container(),
-                mPowerProducts?.isNotEmpty ?? false
-                    ? _buildProductList(context, mPowerProducts)
-                    : Container(),
-                _buildTitle(context, "For this you selected the"),
-                _buildSelectedBundle(context),
-              ],
+            Container(
+              constraints: BoxConstraints(maxWidth: 460.0),
+              child: ListView(
+                padding: const EdgeInsets.all(24.0),
+                children: [
+                  customerProducts?.isNotEmpty ?? false
+                      ? _buildTitle(context, "You search a solution for your")
+                      : Container(),
+                  customerProducts?.isNotEmpty ?? false
+                      ? _buildProductList(context, customerProducts)
+                      : Container(),
+                  mPowerProducts?.isNotEmpty ?? false
+                      ? _buildTitle(context, "And you would like a new MPower")
+                      : Container(),
+                  mPowerProducts?.isNotEmpty ?? false
+                      ? _buildProductList(context, mPowerProducts)
+                      : Container(),
+                  _buildTitle(context, "For this you selected the"),
+                  _buildSelectedBundle(context),
+                  SizedBox(height: 64.0),
+                ],
+              ),
             ),
             _buildConfirmButton(),
           ],
@@ -69,14 +75,17 @@ class ReviewPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Container(
-              constraints: BoxConstraints(maxWidth: 256.0),
-              child: Text(
+              constraints: BoxConstraints(
+                  maxWidth: min(200, MediaQuery.of(context).size.width / 2)),
+              child: AutoSizeText(
                 productName,
-                textWidthBasis: TextWidthBasis.longestLine,
                 style: Theme.of(context)
                     .textTheme
                     .subtitle1
                     .copyWith(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                minFontSize: 14.0,
               ),
             ),
             Expanded(
@@ -94,7 +103,7 @@ class ReviewPage extends StatelessWidget {
                 style: Theme.of(context)
                     .textTheme
                     .subtitle2
-                    .copyWith(color: Colors.white, fontSize: 16.0),
+                    .copyWith(color: Colors.white),
               ),
             ),
           ],
@@ -132,9 +141,10 @@ class ReviewPage extends StatelessWidget {
                   SizedBox(width: 2.0),
                   // prod name
                   Expanded(
-                    child: Text(
+                    child: AutoSizeText(
                       prod.name,
-                      style: TextStyle(color: Colors.white, fontSize: 16.0),
+                      style: TextStyle(color: Colors.white),
+                      maxLines: 2,
                     ),
                   ),
                 ],

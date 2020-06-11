@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:cons_calc_lib/src/title_form.dart';
@@ -79,7 +80,7 @@ class DynamicFormUI extends StatelessWidget {
   }
 
   Widget _buildQuestionCarousel(BuildContext context) {
-    double cardSize = MediaQuery.of(context).size.width - 70;
+    double cardSize = min(MediaQuery.of(context).size.width - 70, 480.0);
     double padding = 18.0;
 
     return Container(
@@ -89,7 +90,6 @@ class DynamicFormUI extends StatelessWidget {
             .map(
               (question) => QuestionCard(
                 cardSize: cardSize,
-                isWeb: MediaQuery.of(context).size.aspectRatio > 1,
                 nextButtonStatus: nextButtonStatus,
                 currentQuestionStream: currentQuestionStream,
                 finishAndSaveForm: finishAndSaveForm,

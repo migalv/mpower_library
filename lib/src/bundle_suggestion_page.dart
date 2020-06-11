@@ -89,6 +89,7 @@ class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
       alignment: Alignment.bottomCenter,
       children: [
         Container(
+          constraints: BoxConstraints(maxWidth: 480.0, maxHeight: 480.0),
           margin: const EdgeInsets.fromLTRB(40.0, 16.0, 40.0, 32.0),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -294,10 +295,11 @@ class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
 
   Widget _title(BuildContext context) => Container(
         padding: const EdgeInsets.all(16.0),
-        width: MediaQuery.of(context).size.width,
+        width: _size.width,
         child: Text(
           'We recommend these bundles for you',
           style: Theme.of(context).textTheme.headline1.copyWith(fontSize: 32.0),
+          textAlign: TextAlign.center,
         ),
       );
 
@@ -307,8 +309,7 @@ class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
     var opacityInv = (opacity - 1).abs();
 
     return Container(
-      width: _size.width,
-      height: _size.height * .3,
+      constraints: BoxConstraints(maxHeight: _size.height / 2),
       child: Stack(
         alignment: Alignment.center,
         children: [

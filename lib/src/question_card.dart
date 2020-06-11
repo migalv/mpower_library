@@ -7,7 +7,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class QuestionCard extends StatefulWidget {
-  final bool isWeb;
   final ButtonStatus nextButtonStatus;
   final Question question;
   final Function isBackButtonVisible,
@@ -23,7 +22,6 @@ class QuestionCard extends StatefulWidget {
 
   QuestionCard({
     @required this.question,
-    @required this.isWeb,
     @required this.nextButtonStatus,
     @required this.isBackButtonVisible,
     @required this.isSelected,
@@ -62,22 +60,27 @@ class _QuestionCardState extends State<QuestionCard> {
           int questionDifference =
               currentQuestion.index - widget.question.index;
           double opacity = 1.0;
+          double centerFromLeft =
+              MediaQuery.of(context).size.width / 2 - (widget.cardSize / 2);
 
           if (isCurrentQuestion) {
-            left =
-                MediaQuery.of(context).size.width / 2 - (widget.cardSize / 2);
+            left = centerFromLeft;
           } else if (isNextQuestion) {
             left = MediaQuery.of(context).size.width - verticalInset;
           } else if (questionDifference == 1) {
             bottom -= verticalInset * questionDifference;
+            left = centerFromLeft - padding;
             opacity = 0.7;
           } else if (questionDifference == 2) {
+            left = centerFromLeft - padding;
             bottom -= verticalInset * questionDifference;
             opacity = 0.5;
           } else if (questionDifference == 3) {
+            left = centerFromLeft - padding;
             bottom -= verticalInset * questionDifference;
             opacity = 0.3;
           } else if (questionDifference > 3) {
+            left = centerFromLeft - padding;
             bottom -= verticalInset * 3;
             opacity = 0.0;
           }
@@ -235,48 +238,37 @@ class _QuestionCardState extends State<QuestionCard> {
       CachedNetworkImage(
         useOldImageOnUrlChange: true,
         imageUrl: answer.imageUrl,
-        placeholder: (_, __) => Card(
-          child: Container(
-            width: MediaQuery.of(context).size.width / 2 + 32.0,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  MdiIcons.fileAlert,
-                  color: Colors.black26,
-                  size: 32.0,
-                ),
-                SizedBox(height: 8.0),
-                // TODO TRANSLATE
-                Text(
-                  "Unable to download image",
-                  style: Theme.of(context).textTheme.subtitle2,
-                ),
-              ],
+        placeholder: (_, __) {
+          return Card(
+            child: Container(
+              width: MediaQuery.of(context).size.width / 2 + 32.0,
+              child: Center(child: CircularProgressIndicator()),
             ),
-          ),
-        ),
-        errorWidget: (_, __, ___) => Card(
-          child: Container(
-            width: MediaQuery.of(context).size.width / 2 + 32.0,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  MdiIcons.fileAlert,
-                  color: Colors.black26,
-                  size: 32.0,
-                ),
-                SizedBox(height: 8.0),
-                // TODO TRANSLATE
-                Text(
-                  "Unable to download image",
-                  style: Theme.of(context).textTheme.subtitle2,
-                ),
-              ],
+          );
+        },
+        errorWidget: (_, __, ___) {
+          return Card(
+            child: Container(
+              width: MediaQuery.of(context).size.width / 2 + 32.0,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    MdiIcons.fileAlert,
+                    color: Colors.black26,
+                    size: 32.0,
+                  ),
+                  SizedBox(height: 8.0),
+                  // TODO TRANSLATE
+                  Text(
+                    "Unable to download image",
+                    style: Theme.of(context).textTheme.subtitle2,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
         imageBuilder: (context, image) {
           return Card(
             child: Container(
@@ -519,24 +511,7 @@ class _QuestionCardState extends State<QuestionCard> {
 
   void _restartForm() => widget.saveAndRestartForm();
 
-  void _finishForm() async {
-    var consumptionProducts = await widget.finishAndSaveForm();
-
-    // TODO Revisar
-    // if (consumptionProducts.isNotEmpty) {
-    //   Navigator.pop(context);
-    //   utils.push(
-    //     context,
-    //     BlocProvider<BundleRecommendationBloc>(
-    //       initBloc: (_, bloc) =>
-    //           bloc ?? BundleRecommendationBloc(consumptionProducts),
-    //       onDispose: (_, bloc) => bloc.dispose(),
-    //       child: BundleRecommendationPage(),
-    //     ),
-    //   );
-    // }
-    // }
-  }
+  void _finishForm() => widget.finishAndSaveForm();
 
   bool isValidURL(String url) {
     bool valid = false;

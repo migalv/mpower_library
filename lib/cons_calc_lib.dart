@@ -20,6 +20,7 @@ export './src/widgets/power_card.dart';
 export './src/widgets/question_card.dart';
 export './src/widgets/title_form.dart';
 export './src/widgets/custom_expansion_tile.dart';
+export './src/dialogs/personal_info_form_dialog.dart';
 export './src/bloc_provider.dart';
 export './src/circular_reveal_clipper.dart';
 export './src/circular_reveal_route.dart';

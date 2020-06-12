@@ -4,7 +4,7 @@ import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:cons_calc_lib/src/blocs/bundle_suggestion_bloc.dart';
 import 'package:cons_calc_lib/src/models/product_bundle_model.dart';
 import 'package:cons_calc_lib/src/models/product_type.dart';
-import 'package:cons_calc_lib/src/review_page.dart';
+import 'package:cons_calc_lib/src/pages/review_page.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 

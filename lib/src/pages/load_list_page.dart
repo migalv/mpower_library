@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cons_calc_lib/src/circular_reveal_route.dart';
-import 'package:cons_calc_lib/src/load_category_bloc.dart';
-import 'package:cons_calc_lib/src/load_category_page.dart';
+import 'package:cons_calc_lib/src/blocs/load_category_bloc.dart';
+import 'package:cons_calc_lib/src/pages/load_category_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';

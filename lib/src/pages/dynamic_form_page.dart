@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cons_calc_lib/cons_calc_lib.dart';
-import 'package:cons_calc_lib/src/title_form.dart';
-import 'package:cons_calc_lib/src/question_card.dart';
+import 'package:cons_calc_lib/src/widgets/title_form.dart';
+import 'package:cons_calc_lib/src/widgets/question_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

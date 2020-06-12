@@ -25,7 +25,8 @@ class ReviewPage extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Container(
-              constraints: BoxConstraints(maxWidth: 460.0),
+              constraints: BoxConstraints(
+                  maxWidth: max(460.0, MediaQuery.of(context).size.width / 3)),
               child: ListView(
                 padding: const EdgeInsets.all(24.0),
                 children: [
@@ -158,12 +159,12 @@ class ReviewPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Image
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Image.network(
-            bundle.imageUrl,
-            height: 128.0,
-            width: 128.0,
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Image.network(
+              bundle.imageUrl,
+            ),
           ),
         ),
         // Bundle Content

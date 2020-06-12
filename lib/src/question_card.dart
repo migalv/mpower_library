@@ -1,5 +1,4 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -234,81 +233,66 @@ class _QuestionCardState extends State<QuestionCard> {
     return widgets;
   }
 
-  Widget _buildImageCard(String questionId, Answer answer) =>
-      CachedNetworkImage(
-        useOldImageOnUrlChange: true,
-        imageUrl: answer.imageUrl,
-        placeholder: (_, __) {
-          return Card(
-            child: Container(
-              width: MediaQuery.of(context).size.width / 2 + 32.0,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          );
-        },
-        errorWidget: (_, __, ___) {
-          return Card(
-            child: Container(
-              width: MediaQuery.of(context).size.width / 2 + 32.0,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    MdiIcons.fileAlert,
-                    color: Colors.black26,
-                    size: 32.0,
-                  ),
-                  SizedBox(height: 8.0),
-                  // TODO TRANSLATE
-                  Text(
-                    "Unable to download image",
-                    style: Theme.of(context).textTheme.subtitle2,
-                  ),
-                ],
+  Widget _buildImageCard(String questionId, Answer answer) => Card(
+        child: Container(
+          width: MediaQuery.of(context).size.width / 2 + 32.0,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.network(
+                  answer.imageUrl,
+                  frameBuilder: (_, child, __, isLoaded) => isLoaded
+                      ? FittedBox(child: child)
+                      : Center(child: CircularProgressIndicator()),
+                  errorBuilder: (_, __, ___) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          MdiIcons.fileAlert,
+                          color: Colors.black26,
+                          size: 32.0,
+                        ),
+                        SizedBox(height: 8.0),
+                        // TODO TRANSLATE
+                        Text(
+                          "Unable to download image",
+                          style: Theme.of(context).textTheme.subtitle2,
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-          );
-        },
-        imageBuilder: (context, image) {
-          return Card(
-            child: Container(
-              width: MediaQuery.of(context).size.width / 2 + 32.0,
-              child: Stack(
-                children: [
-                  Material(
-                    child: Ink.image(
-                      image: image,
+              widget.isSelected(questionId, answer)
+                  ? Container(
+                      decoration: BoxDecoration(
+                        color: secondaryMain.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.check_circle_outline,
+                            size: 32.0,
+                            color: secondaryMain,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Material(
+                      color: Colors.transparent,
                       child: InkWell(
                         splashColor: Color(0x40FFC107),
                         highlightColor: Color(0x20FFC107),
                         onTap: () => widget.setValue(answer, answer.value),
                       ),
                     ),
-                  ),
-                  widget.isSelected(questionId, answer)
-                      ? Container(
-                          decoration: BoxDecoration(
-                            color: secondaryMain.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(4.0),
-                          ),
-                          child: Align(
-                            alignment: Alignment.bottomRight,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                Icons.check_circle_outline,
-                                size: 32.0,
-                                color: secondaryMain,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Container(),
-                ],
-              ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       );
 
   Widget _buildSelectAnswer(String questionId, Answer answer) =>
@@ -441,21 +425,19 @@ class _QuestionCardState extends State<QuestionCard> {
                     Container(
                       height: 98.0,
                       width: 184.0,
-                      child: isValidURL(product.imageURL)
-                          ? CachedNetworkImage(
-                              useOldImageOnUrlChange: true,
-                              imageUrl: product.imageURL,
-                              placeholder: (_, __) => Icon(
-                                MdiIcons.tag,
-                                color: Colors.black26,
-                                size: 32.0,
+                      child: Image.network(
+                        product.imageURL,
+                        frameBuilder: (_, widget, __, isLoaded) => isLoaded
+                            ? widget
+                            : Center(
+                                child: CircularProgressIndicator(),
                               ),
-                            )
-                          : Icon(
-                              MdiIcons.tag,
-                              color: Colors.black26,
-                              size: 32.0,
-                            ),
+                        errorBuilder: (_, __, ___) => Icon(
+                          MdiIcons.tag,
+                          color: Colors.black26,
+                          size: 32.0,
+                        ),
+                      ),
                     ),
                     Divider(
                       height: 1.0,

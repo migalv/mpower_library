@@ -1,15 +1,28 @@
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class PersonalInfoFormDialog extends StatelessWidget {
+  final String title;
+  final TextEditingController nameController = TextEditingController(),
+      phoneController = TextEditingController(),
+      emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  PersonalInfoFormDialog({Key key, @required this.title}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () => Future.value(false),
+      onWillPop: () {
+        _validateForm(context);
+        return Future.value(false);
+      },
       child: AlertDialog(
         useMaterialBorderRadius: true,
         title: Text(
-          "Tell us a little more about yourself",
+          title ?? "",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Theme(
@@ -17,19 +30,42 @@ class PersonalInfoFormDialog extends StatelessWidget {
             primaryColor: secondaryMain,
             cursorColor: secondaryMain,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTextField("Name", Icons.person),
-              _buildTextField("Phone number", Icons.phone),
-              _buildTextField("Email", Icons.email),
-            ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTextField(
+                  "Name",
+                  MdiIcons.account,
+                  nameController,
+                  isRequired: true,
+                ),
+                _buildTextField(
+                  "Phone number",
+                  MdiIcons.phone,
+                  phoneController,
+                  keyboardType: TextInputType.phone,
+                  isRequired: true,
+                  minLength: 8,
+                  textInputFormatters: [
+                    WhitelistingTextInputFormatter.digitsOnly
+                  ],
+                ),
+                _buildTextField(
+                  "Email",
+                  Icons.email,
+                  emailController,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
           RaisedButton(
-            onPressed: () {},
+            onPressed: () => _validateForm(context),
             child: Text("Continue", style: TextStyle(color: black70)),
           ),
         ],
@@ -37,9 +73,31 @@ class PersonalInfoFormDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, IconData iconData) => Padding(
+  // BUILD
+  Widget _buildTextField(
+    String label,
+    IconData iconData,
+    TextEditingController controller, {
+    TextInputType keyboardType,
+    List<TextInputFormatter> textInputFormatters,
+    int minLength,
+    bool isRequired = false,
+  }) =>
+      Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: TextField(
+        child: TextFormField(
+          validator: isRequired
+              ? (val) {
+                  if (val == null ||
+                      val == "" ||
+                      (minLength != null && val.length < minLength))
+                    return "Enter a valid $label";
+                  return null;
+                }
+              : null,
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: textInputFormatters,
           decoration: InputDecoration(
             labelText: label,
             prefixIcon: Icon(iconData),
@@ -53,4 +111,25 @@ class PersonalInfoFormDialog extends StatelessWidget {
           ),
         ),
       );
+
+  // METHODS
+  void _validateForm(BuildContext context) {
+    if (_formKey.currentState.validate()) {
+      Map<String, Map> contactInfo = {};
+      contactInfo["name"] = {
+        "label": "Name",
+        "value": nameController.text,
+      };
+      contactInfo["phone"] = {
+        "label": "Phone Number",
+        "value": phoneController.text,
+      };
+      if (emailController.text != null && emailController.text != "")
+        contactInfo["email"] = {
+          "label": "Email",
+          "value": emailController.text,
+        };
+      Navigator.of(context).pop(contactInfo);
+    }
+  }
 }

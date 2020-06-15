@@ -9,6 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class BundleSuggestionPage extends StatefulWidget {
+  final Function createCustomerLead;
+
+  const BundleSuggestionPage({
+    Key key,
+    @required this.createCustomerLead,
+  }) : super(key: key);
+
   @override
   _BundleSuggestionPageState createState() => _BundleSuggestionPageState();
 }
@@ -266,6 +273,7 @@ class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
                     bundle: productBundle,
                     customerProducts: bloc.customerProducts,
                     mPowerProducts: bloc.mPowerProducts,
+                    createCustomerLead: widget.createCustomerLead,
                   ),
                 )),
           ),

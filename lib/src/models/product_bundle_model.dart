@@ -38,6 +38,13 @@ class ProductBundle {
         this.backgroundTopColor = Color(
             int.parse(json[BG_TOP_COLOR], radix: 16) ?? secondaryMain.value);
 
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        NAME: name,
+        PRICE: price,
+        PRODUCTS: bundleProducts.map((prod) => prod.id).toList(),
+      };
+
   static const String NAME = "bundle_name";
   static const String PRICE = "bundle_price";
   static const String IMAGE_URL = "image_url";

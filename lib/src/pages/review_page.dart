@@ -8,12 +8,14 @@ class ReviewPage extends StatelessWidget {
   final ProductBundle bundle;
   final List<ConsumptionProduct> customerProducts;
   final List<ConsumptionProduct> mPowerProducts;
+  final Function createCustomerLead;
 
   const ReviewPage({
     Key key,
     @required this.bundle,
     @required this.customerProducts,
     @required this.mPowerProducts,
+    @required this.createCustomerLead,
   }) : super(key: key);
 
   @override
@@ -48,7 +50,7 @@ class ReviewPage extends StatelessWidget {
                 ],
               ),
             ),
-            _buildConfirmButton(),
+            _buildConfirmButton(context),
           ],
         ),
       ),
@@ -177,7 +179,7 @@ class ReviewPage extends StatelessWidget {
     );
   }
 
-  Widget _buildConfirmButton() => Align(
+  Widget _buildConfirmButton(BuildContext context) => Align(
         alignment: Alignment.bottomCenter,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 24.0),
@@ -188,7 +190,6 @@ class ReviewPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(8.0),
               side: BorderSide(color: black6),
             ),
-            onPressed: () {},
             color: Color(0xFF009688),
             child: Text(
               "CONFIRM",
@@ -197,6 +198,23 @@ class ReviewPage extends StatelessWidget {
                 fontSize: 16.0,
               ),
             ),
+            onPressed: () async {
+              Map<String, Map> contactInfo = await showDialog(
+                context: context,
+                builder: (_) => PersonalInfoFormDialog(
+                  title: "Tell us a little more about yourself",
+                ),
+              );
+              createCustomerLead(contactInfo, extraInfo: {
+                "customer_selection": {
+                  "mPowerProducts":
+                      mPowerProducts.map((prod) => prod.toJson()).toList(),
+                  "customerProducts":
+                      customerProducts.map((prod) => prod.toJson()).toList(),
+                  "bundle": bundle.toJson(),
+                },
+              });
+            },
           ),
         ),
       );

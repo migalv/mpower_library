@@ -21,6 +21,13 @@ class ConsumptionProduct {
     this.imageUrl,
     this.icon,
   });
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "name": name,
+        "power_consumption": powerConsumption,
+        "units": units,
+      };
 }
 
 class ConsumptionSubProduct {

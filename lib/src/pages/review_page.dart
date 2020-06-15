@@ -9,6 +9,7 @@ class ReviewPage extends StatelessWidget {
   final List<ConsumptionProduct> customerProducts;
   final List<ConsumptionProduct> mPowerProducts;
   final Function createCustomerLead;
+  final bool showContactForm;
 
   const ReviewPage({
     Key key,
@@ -16,6 +17,7 @@ class ReviewPage extends StatelessWidget {
     @required this.customerProducts,
     @required this.mPowerProducts,
     @required this.createCustomerLead,
+    @required this.showContactForm,
   }) : super(key: key);
 
   @override
@@ -199,13 +201,16 @@ class ReviewPage extends StatelessWidget {
               ),
             ),
             onPressed: () async {
-              Map<String, Map> contactInfo = await showDialog(
-                context: context,
-                builder: (_) => PersonalInfoFormDialog(
-                  title: "Tell us a little more about yourself",
-                ),
-              );
-              createCustomerLead(contactInfo, extraInfo: {
+              Map<String, Map> contactInfo;
+              if (showContactForm) {
+                contactInfo = await showDialog(
+                  context: context,
+                  builder: (_) => PersonalInfoFormDialog(
+                    title: "Tell us a little more about yourself",
+                  ),
+                );
+              }
+              createCustomerLead(contactInfo: contactInfo, extraInfo: {
                 "customer_selection": {
                   "mPowerProducts":
                       mPowerProducts.map((prod) => prod.toJson()).toList(),

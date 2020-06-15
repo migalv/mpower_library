@@ -10,10 +10,12 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 
 class BundleSuggestionPage extends StatefulWidget {
   final Function createCustomerLead;
+  final bool showContactForm;
 
   const BundleSuggestionPage({
     Key key,
     @required this.createCustomerLead,
+    @required this.showContactForm,
   }) : super(key: key);
 
   @override
@@ -274,6 +276,7 @@ class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
                     customerProducts: bloc.customerProducts,
                     mPowerProducts: bloc.mPowerProducts,
                     createCustomerLead: widget.createCustomerLead,
+                    showContactForm: widget.showContactForm,
                   ),
                 )),
           ),

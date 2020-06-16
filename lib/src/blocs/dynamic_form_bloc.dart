@@ -7,9 +7,12 @@ import 'package:rxdart/rxdart.dart';
 class DynamicFormUIBloc {
   DynamicForm _initialForm;
   List<DynamicForm> _forms;
-  List<Map> _formResults;
+  Map<String, Map> _formResults;
   int _currentFormIndex;
-  Function _getDynamicFormWithId, _getConsumptionProduct, _sendAnalyticsEvent;
+  Function _getDynamicFormWithId,
+      _getConsumptionProduct,
+      _sendAnalyticsEvent,
+      _uploadFormResults;
 
   // Streams
   ValueObservable<Map> get currentFormResults =>
@@ -55,17 +58,19 @@ class DynamicFormUIBloc {
     @required initialForm,
     @required getDynamicFormWithId,
     @required getConsumptionProduct,
+    @required uploadFormResults,
     sendAnalyticsEvent,
   }) {
     _getDynamicFormWithId = getDynamicFormWithId;
     _getConsumptionProduct = getConsumptionProduct;
+    _uploadFormResults = uploadFormResults;
     _sendAnalyticsEvent = sendAnalyticsEvent;
     _initialForm = initialForm;
     _forms = [_initialForm];
     _formsController.add(_forms);
     _currentFormController.add(initialForm);
     _currentQuestionController.add(initialForm.questions.first);
-    _formResults = [];
+    _formResults = {};
     _currentFormIndex = 0;
   }
 
@@ -78,7 +83,6 @@ class DynamicFormUIBloc {
       Answer.ID: answer.id,
       "value": value,
       Question.QUESTION_PURPOSE: currentQuestion.value.questionPurpose,
-      Question.TABLE_ID: currentQuestion.value.tableId,
     };
     _currentFormResultsController.add(results);
 
@@ -100,7 +104,7 @@ class DynamicFormUIBloc {
   }
 
   void saveAndRestartForm() {
-    _formResults.add(currentFormResults.value);
+    _formResults[currentForm.value.id] = currentFormResults.value;
     _previousQuestionsController.add([]);
     _currentQuestionController.add(currentForm.value.questions
         .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
@@ -112,7 +116,7 @@ class DynamicFormUIBloc {
   Future<List> finishAndSaveForm() async {
     List consumptionProducts = [];
 
-    _formResults.add(currentFormResults.value);
+    _formResults[currentForm.value.id] = currentFormResults.value;
 
     for (Map answerData in currentFormResults.value.values) {
       if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
@@ -136,12 +140,12 @@ class DynamicFormUIBloc {
       _currentFormResultsController.add(null);
 
       _updateButtonStatus();
-    } else {
-      // It's the last form
+    } // It's the last form
+    else {
       double extraConsumption = 0.0;
 
       // For each form we recollect the answers for the consumption questions
-      for (Map questionsMap in _formResults) {
+      for (Map questionsMap in _formResults.values) {
         int units;
         // We store the atributes to filter the consumption products
         List filters = [];
@@ -201,10 +205,12 @@ class DynamicFormUIBloc {
           }
 
           consumptionProducts.add(consumptionProduct);
-          _sendAnalyticsEvent("form_completed");
           // TODO ADD THE EXTRA CONSUMPTION
         }
       }
+      // Upload the results to Firestore
+      _uploadFormResults(_formResults);
+      _sendAnalyticsEvent("form_completed");
     }
 
     return consumptionProducts;

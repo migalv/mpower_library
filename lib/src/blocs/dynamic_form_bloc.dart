@@ -9,7 +9,7 @@ class DynamicFormUIBloc {
   List<DynamicForm> _forms;
   List<Map> _formResults;
   int _currentFormIndex;
-  Function _getDynamicFormWithId, _getConsumptionProduct;
+  Function _getDynamicFormWithId, _getConsumptionProduct, _sendAnalyticsEvent;
 
   // Streams
   ValueObservable<Map> get currentFormResults =>
@@ -55,9 +55,11 @@ class DynamicFormUIBloc {
     @required initialForm,
     @required getDynamicFormWithId,
     @required getConsumptionProduct,
+    sendAnalyticsEvent,
   }) {
     _getDynamicFormWithId = getDynamicFormWithId;
     _getConsumptionProduct = getConsumptionProduct;
+    _sendAnalyticsEvent = sendAnalyticsEvent;
     _initialForm = initialForm;
     _forms = [_initialForm];
     _formsController.add(_forms);
@@ -94,6 +96,7 @@ class DynamicFormUIBloc {
     _currentQuestionController.add(question);
 
     _updateButtonStatus();
+    if (_sendAnalyticsEvent != null) _sendAnalyticsEvent("question_answered");
   }
 
   void saveAndRestartForm() {
@@ -198,6 +201,7 @@ class DynamicFormUIBloc {
           }
 
           consumptionProducts.add(consumptionProduct);
+          _sendAnalyticsEvent("form_completed");
           // TODO ADD THE EXTRA CONSUMPTION
         }
       }

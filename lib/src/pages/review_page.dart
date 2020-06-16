@@ -4,11 +4,11 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:flutter/material.dart';
 
-class ReviewPage extends StatelessWidget {
+class ReviewPage extends StatefulWidget {
   final ProductBundle bundle;
   final List<ConsumptionProduct> customerProducts;
   final List<ConsumptionProduct> mPowerProducts;
-  final Function createCustomerLead;
+  final Function createCustomerLead, sendAnalyticsEvent;
   final bool showContactForm;
 
   const ReviewPage({
@@ -18,43 +18,57 @@ class ReviewPage extends StatelessWidget {
     @required this.mPowerProducts,
     @required this.createCustomerLead,
     @required this.showContactForm,
+    @required this.sendAnalyticsEvent,
   }) : super(key: key);
+
+  @override
+  _ReviewPageState createState() => _ReviewPageState();
+}
+
+class _ReviewPageState extends State<ReviewPage> {
+  bool hasConfirmed = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF42515A),
       body: SafeArea(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              constraints: BoxConstraints(
-                  maxWidth: max(460.0, MediaQuery.of(context).size.width / 3)),
-              child: ListView(
-                padding: const EdgeInsets.all(24.0),
+        child: hasConfirmed
+            ? ConfirmationWidget()
+            : Stack(
+                alignment: Alignment.center,
                 children: [
-                  customerProducts?.isNotEmpty ?? false
-                      ? _buildTitle(context, "You search a solution for your")
-                      : Container(),
-                  customerProducts?.isNotEmpty ?? false
-                      ? _buildProductList(context, customerProducts)
-                      : Container(),
-                  mPowerProducts?.isNotEmpty ?? false
-                      ? _buildTitle(context, "And you would like a new MPower")
-                      : Container(),
-                  mPowerProducts?.isNotEmpty ?? false
-                      ? _buildProductList(context, mPowerProducts)
-                      : Container(),
-                  _buildTitle(context, "For this you selected the"),
-                  _buildSelectedBundle(context),
-                  SizedBox(height: 64.0),
+                  Container(
+                    constraints: BoxConstraints(
+                        maxWidth:
+                            max(460.0, MediaQuery.of(context).size.width / 3)),
+                    child: ListView(
+                      padding: const EdgeInsets.all(24.0),
+                      children: [
+                        widget.customerProducts?.isNotEmpty ?? false
+                            ? _buildTitle(
+                                context, "You search a solution for your")
+                            : Container(),
+                        widget.customerProducts?.isNotEmpty ?? false
+                            ? _buildProductList(
+                                context, widget.customerProducts)
+                            : Container(),
+                        widget.mPowerProducts?.isNotEmpty ?? false
+                            ? _buildTitle(
+                                context, "And you would like a new MPower")
+                            : Container(),
+                        widget.mPowerProducts?.isNotEmpty ?? false
+                            ? _buildProductList(context, widget.mPowerProducts)
+                            : Container(),
+                        _buildTitle(context, "For this you selected the"),
+                        _buildSelectedBundle(context),
+                        SizedBox(height: 64.0),
+                      ],
+                    ),
+                  ),
+                  _buildConfirmButton(context),
                 ],
               ),
-            ),
-            _buildConfirmButton(context),
-          ],
-        ),
       ),
     );
   }
@@ -122,7 +136,7 @@ class ReviewPage extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.only(bottom: 8.0),
         child: Text(
-          bundle.name,
+          widget.bundle.name,
           style: Theme.of(context).textTheme.bodyText1.copyWith(
                 color: Colors.white,
                 fontSize: 20.0,
@@ -132,7 +146,7 @@ class ReviewPage extends StatelessWidget {
     ];
 
     bundleContent.addAll(
-      bundle.bundleProducts
+      widget.bundle.bundleProducts
           .map(
             (prod) => Padding(
               padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
@@ -167,7 +181,7 @@ class ReviewPage extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Image.network(
-              bundle.imageUrl,
+              widget.bundle.imageUrl,
             ),
           ),
         ),
@@ -202,23 +216,28 @@ class ReviewPage extends StatelessWidget {
             ),
             onPressed: () async {
               Map<String, Map> contactInfo;
-              if (showContactForm) {
+              if (widget.showContactForm) {
+                widget.sendAnalyticsEvent("contact_form_shown");
                 contactInfo = await showDialog(
                   context: context,
                   builder: (_) => PersonalInfoFormDialog(
                     title: "Tell us a little more about yourself",
                   ),
                 );
+                widget.sendAnalyticsEvent("contact_form_completed");
               }
-              createCustomerLead(contactInfo: contactInfo, extraInfo: {
+              widget.createCustomerLead(contactInfo: contactInfo, extraInfo: {
                 "customer_selection": {
-                  "mPowerProducts":
-                      mPowerProducts.map((prod) => prod.toJson()).toList(),
-                  "customerProducts":
-                      customerProducts.map((prod) => prod.toJson()).toList(),
-                  "bundle": bundle.toJson(),
+                  "mPowerProducts": widget.mPowerProducts
+                      .map((prod) => prod.toJson())
+                      .toList(),
+                  "customerProducts": widget.customerProducts
+                      .map((prod) => prod.toJson())
+                      .toList(),
+                  "bundle": widget.bundle.toJson(),
                 },
               });
+              setState(() => hasConfirmed = true);
             },
           ),
         ),
@@ -234,4 +253,40 @@ class ReviewPage extends StatelessWidget {
               .copyWith(color: Colors.white, fontSize: 26.0),
         ),
       );
+}
+
+class ConfirmationWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    AutoSizeGroup group = AutoSizeGroup();
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 128.0,
+            ),
+            AutoSizeText(
+              "Thanks a lot for your time!",
+              style: Theme.of(context).textTheme.headline1,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              group: group,
+            ),
+            AutoSizeText(
+              "An MPower employee will get in touch with you soon.",
+              style: Theme.of(context).textTheme.headline1,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              group: group,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -9,13 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class BundleSuggestionPage extends StatefulWidget {
-  final Function createCustomerLead;
+  final Function createCustomerLead, sendAnalyticsEvent;
   final bool showContactForm;
 
   const BundleSuggestionPage({
     Key key,
     @required this.createCustomerLead,
     @required this.showContactForm,
+    @required this.sendAnalyticsEvent,
   }) : super(key: key);
 
   @override
@@ -277,6 +278,7 @@ class _BundleSuggestionPageState extends State<BundleSuggestionPage> {
                     mPowerProducts: bloc.mPowerProducts,
                     createCustomerLead: widget.createCustomerLead,
                     showContactForm: widget.showContactForm,
+                    sendAnalyticsEvent: widget.sendAnalyticsEvent,
                   ),
                 )),
           ),

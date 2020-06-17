@@ -13,9 +13,9 @@ class ReviewPage extends StatefulWidget {
 
   const ReviewPage({
     Key key,
-    @required this.bundle,
-    @required this.customerProducts,
-    @required this.mPowerProducts,
+    this.bundle,
+    this.customerProducts,
+    this.mPowerProducts,
     @required this.createCustomerLead,
     @required this.showContactForm,
     @required this.sendAnalyticsEvent,
@@ -27,6 +27,8 @@ class ReviewPage extends StatefulWidget {
 
 class _ReviewPageState extends State<ReviewPage> {
   bool hasConfirmed = false;
+  final tabletBreakpoint = 768.0;
+  final smallDevicesBreakpoint = 375.0;
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +41,18 @@ class _ReviewPageState extends State<ReviewPage> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    constraints: BoxConstraints(
-                        maxWidth:
-                            max(460.0, MediaQuery.of(context).size.width / 3)),
+                    constraints: BoxConstraints(maxWidth: tabletBreakpoint),
                     child: ListView(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: EdgeInsets.all(
+                          MediaQuery.of(context).size.width <=
+                                  smallDevicesBreakpoint
+                              ? 16.0
+                              : 24.0),
                       children: [
+                        _buildMPowerLogo(),
                         widget.customerProducts?.isNotEmpty ?? false
                             ? _buildTitle(
-                                context, "You search a solution for your")
+                                context, "You search a solution for your...")
                             : Container(),
                         widget.customerProducts?.isNotEmpty ?? false
                             ? _buildProductList(
@@ -55,13 +60,18 @@ class _ReviewPageState extends State<ReviewPage> {
                             : Container(),
                         widget.mPowerProducts?.isNotEmpty ?? false
                             ? _buildTitle(
-                                context, "And you would like a new MPower")
+                                context, "You would like a new MPower...")
                             : Container(),
                         widget.mPowerProducts?.isNotEmpty ?? false
                             ? _buildProductList(context, widget.mPowerProducts)
                             : Container(),
-                        _buildTitle(context, "For this you selected the"),
-                        _buildSelectedBundle(context),
+                        widget.bundle != null
+                            ? _buildTitle(
+                                context, "For this you selected the ...")
+                            : Container(),
+                        widget.bundle != null
+                            ? _buildSelectedBundle(context)
+                            : Container(),
                         SizedBox(height: 64.0),
                       ],
                     ),
@@ -72,6 +82,14 @@ class _ReviewPageState extends State<ReviewPage> {
       ),
     );
   }
+
+  Widget _buildMPowerLogo() => Center(
+        child: Container(
+          margin: const EdgeInsets.only(top: 24.0, bottom: 48.0),
+          child: Image.network(
+              "https://firebasestorage.googleapis.com/v0/b/mpower-dashboard-components.appspot.com/o/assets%2Fmpower_logos%2FMpower_logo.png?alt=media&token=de0e097b-df18-4f75-97ef-b67e4655bc97"),
+        ),
+      );
 
   Widget _buildProductList(
           BuildContext context, List<ConsumptionProduct> products) =>
@@ -89,13 +107,21 @@ class _ReviewPageState extends State<ReviewPage> {
   Widget _buildProductRow(
           BuildContext context, String productName, double consumption) =>
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: EdgeInsets.symmetric(
+            horizontal:
+                MediaQuery.of(context).size.width <= smallDevicesBreakpoint
+                    ? 8.0
+                    : 16.0,
+            vertical: 8.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Container(
               constraints: BoxConstraints(
-                  maxWidth: min(200, MediaQuery.of(context).size.width / 2)),
+                maxWidth: MediaQuery.of(context).size.width <= tabletBreakpoint
+                    ? MediaQuery.of(context).size.width / 2
+                    : tabletBreakpoint / 2,
+              ),
               child: AutoSizeText(
                 productName,
                 style: Theme.of(context)
@@ -229,12 +255,12 @@ class _ReviewPageState extends State<ReviewPage> {
               widget.createCustomerLead(contactInfo: contactInfo, extraInfo: {
                 "customer_selection": {
                   "mPowerProducts": widget.mPowerProducts
-                      .map((prod) => prod.toJson())
-                      .toList(),
+                      ?.map((prod) => prod.toJson())
+                      ?.toList(),
                   "customerProducts": widget.customerProducts
-                      .map((prod) => prod.toJson())
-                      .toList(),
-                  "bundle": widget.bundle.toJson(),
+                      ?.map((prod) => prod.toJson())
+                      ?.toList(),
+                  "bundle": widget.bundle?.toJson(),
                 },
               });
               setState(() => hasConfirmed = true);

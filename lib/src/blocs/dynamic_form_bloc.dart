@@ -9,10 +9,7 @@ class DynamicFormUIBloc {
   List<DynamicForm> _forms;
   Map<String, Map> _formResults;
   int _currentFormIndex;
-  final Function getDynamicFormWithId,
-      getConsumptionProduct,
-      sendFormCompletedAnalyticsEvent,
-      uploadFormResults;
+  final Function getDynamicFormWithId, getConsumptionProduct, uploadFormResults;
 
   // Streams
   ValueObservable<Map> get currentFormResults =>
@@ -59,7 +56,6 @@ class DynamicFormUIBloc {
     @required this.getDynamicFormWithId,
     @required this.getConsumptionProduct,
     @required this.uploadFormResults,
-    this.sendFormCompletedAnalyticsEvent,
   }) {
     _forms = [initialForm];
     _formsController.add(_forms);
@@ -204,7 +200,6 @@ class DynamicFormUIBloc {
       }
       // Upload the results to Firestore
       uploadFormResults(_formResults);
-      sendFormCompletedAnalyticsEvent();
     }
 
     return consumptionProducts;

@@ -17,7 +17,7 @@ class QuestionCard extends StatefulWidget {
       finishAndSaveForm,
       saveAndRestartForm;
   final Stream<Question> currentQuestionStream;
-  final double cardSize;
+  final double cardWidth, cardHeight;
   final bool isKeyboardVisible;
 
   QuestionCard({
@@ -31,7 +31,8 @@ class QuestionCard extends StatefulWidget {
     @required this.goToNextQuestion,
     @required this.saveAndRestartForm,
     @required this.currentQuestionStream,
-    @required this.cardSize,
+    @required this.cardWidth,
+    @required this.cardHeight,
     @required this.isKeyboardVisible,
   });
 
@@ -61,7 +62,7 @@ class _QuestionCardState extends State<QuestionCard> {
               currentQuestion.index - widget.question.index;
           double opacity = 1.0;
           double centerFromLeft =
-              MediaQuery.of(context).size.width / 2 - (widget.cardSize / 2);
+              MediaQuery.of(context).size.width / 2 - (widget.cardWidth / 2);
 
           if (isCurrentQuestion) {
             left = centerFromLeft;
@@ -99,8 +100,8 @@ class _QuestionCardState extends State<QuestionCard> {
                     ? MAX_ELEVATION
                     : 0.0,
                 child: Container(
-                  width: widget.cardSize,
-                  height: widget.cardSize -
+                  width: widget.cardWidth,
+                  height: widget.cardHeight -
                       (widget.isKeyboardVisible ? 160.0 : 0.0),
                   child: Column(
                     children: [
@@ -399,7 +400,6 @@ class _QuestionCardState extends State<QuestionCard> {
       CarouselSlider(
         options: CarouselOptions(
           autoPlay: true,
-          aspectRatio: 2.0,
           enlargeCenterPage: true,
         ),
         items: answer.value
@@ -409,83 +409,80 @@ class _QuestionCardState extends State<QuestionCard> {
       );
 
   Widget _buildProductCard(dynamic product, String questionId, Answer answer) =>
-      Container(
-        width: 264.0,
-        margin: const EdgeInsets.only(right: 8.0),
-        child: Card(
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: Stack(
-            children: [
-              InkWell(
-                onTap: () => widget.setValue(answer, product),
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      height: 98.0,
-                      width: 184.0,
-                      child: Image.network(
-                        product.imageURL,
-                        frameBuilder: (_, widget, __, isLoaded) => isLoaded
-                            ? widget
-                            : Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                        errorBuilder: (_, __, ___) => Icon(
-                          MdiIcons.tag,
-                          color: Colors.black26,
-                          size: 32.0,
+      Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: Stack(
+          children: [
+            InkWell(
+              onTap: () => widget.setValue(answer, product),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: Image.network(
+                      product.imageURL,
+                      frameBuilder: (_, widget, __, isLoaded) => isLoaded
+                          ? widget
+                          : Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                      errorBuilder: (_, __, ___) => Icon(
+                        MdiIcons.tag,
+                        color: Colors.black26,
+                        size: 32.0,
+                      ),
+                    ),
+                  ),
+                  Divider(
+                    height: 1.0,
+                    color: Colors.black38,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                          MediaQuery.of(context).size.width < 480 ? 8.0 : 16.0),
+                      child: AutoSizeText(
+                        product.name,
+                        // minFontSize: 12.0,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontFamily: 'LibreFranklin',
+                          fontWeight: FontWeight.w500,
+                          // fontSize: 19.94,
+                          letterSpacing: 0.25,
+                          color: Colors.black87,
                         ),
                       ),
                     ),
-                    Divider(
-                      height: 1.0,
-                      color: Colors.black38,
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8.0, vertical: 8.0),
-                        child: AutoSizeText(
-                          product.name,
-                          minFontSize: 12.0,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'LibreFranklin',
-                            fontWeight: FontWeight.w500,
-                            fontSize: 19.94,
-                            letterSpacing: 0.25,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              widget.isSelected(questionId, answer, value: product)
-                  ? Container(
-                      decoration: BoxDecoration(
-                        color: secondaryMain.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            Icons.check_circle_outline,
-                            size: 32.0,
-                            color: secondaryMain,
-                          ),
+            ),
+            widget.isSelected(questionId, answer, value: product)
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: secondaryMain.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.check_circle_outline,
+                          size: 32.0,
+                          color: secondaryMain,
                         ),
                       ),
-                    )
-                  : Container(),
-            ],
-          ),
+                    ),
+                  )
+                : Container(),
+          ],
         ),
       );
 

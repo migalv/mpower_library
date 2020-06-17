@@ -80,16 +80,20 @@ class DynamicFormUI extends StatelessWidget {
   }
 
   Widget _buildQuestionCarousel(BuildContext context) {
-    double cardSize = min(MediaQuery.of(context).size.width - 70, 480.0);
+    double cardWidth = min(MediaQuery.of(context).size.width - 70, 480.0);
+    double cardHeight = MediaQuery.of(context).size.width < 480.0
+        ? cardWidth + MediaQuery.of(context).size.width * 0.15
+        : cardWidth;
     double padding = 18.0;
 
     return Container(
-      height: cardSize + padding * 2,
+      height: cardHeight + padding * 2,
       child: Stack(
         children: currentForm.questions
             .map(
               (question) => QuestionCard(
-                cardSize: cardSize,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight,
                 nextButtonStatus: nextButtonStatus,
                 currentQuestionStream: currentQuestionStream,
                 finishAndSaveForm: finishAndSaveForm,

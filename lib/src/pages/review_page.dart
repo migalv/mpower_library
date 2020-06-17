@@ -217,14 +217,14 @@ class _ReviewPageState extends State<ReviewPage> {
             onPressed: () async {
               Map<String, Map> contactInfo;
               if (widget.showContactForm) {
-                widget.sendAnalyticsEvent("contact_form_shown");
+                widget.sendAnalyticsEvent("contact_form_shown_last");
                 contactInfo = await showDialog(
                   context: context,
                   builder: (_) => PersonalInfoFormDialog(
                     title: "Tell us a little more about yourself",
                   ),
                 );
-                widget.sendAnalyticsEvent("contact_form_completed");
+                widget.sendAnalyticsEvent("contact_form_completed_last");
               }
               widget.createCustomerLead(contactInfo: contactInfo, extraInfo: {
                 "customer_selection": {

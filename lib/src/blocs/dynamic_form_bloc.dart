@@ -5,14 +5,14 @@ import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DynamicFormUIBloc {
-  DynamicForm _initialForm;
+  final DynamicForm initialForm;
   List<DynamicForm> _forms;
   Map<String, Map> _formResults;
   int _currentFormIndex;
-  Function _getDynamicFormWithId,
-      _getConsumptionProduct,
-      _sendAnalyticsEvent,
-      _uploadFormResults;
+  final Function getDynamicFormWithId,
+      getConsumptionProduct,
+      sendFormCompletedAnalyticsEvent,
+      uploadFormResults;
 
   // Streams
   ValueObservable<Map> get currentFormResults =>
@@ -55,18 +55,13 @@ class DynamicFormUIBloc {
   //
   // CONSTRUCTOR
   DynamicFormUIBloc({
-    @required initialForm,
-    @required getDynamicFormWithId,
-    @required getConsumptionProduct,
-    @required uploadFormResults,
-    sendAnalyticsEvent,
+    @required this.initialForm,
+    @required this.getDynamicFormWithId,
+    @required this.getConsumptionProduct,
+    @required this.uploadFormResults,
+    this.sendFormCompletedAnalyticsEvent,
   }) {
-    _getDynamicFormWithId = getDynamicFormWithId;
-    _getConsumptionProduct = getConsumptionProduct;
-    _uploadFormResults = uploadFormResults;
-    _sendAnalyticsEvent = sendAnalyticsEvent;
-    _initialForm = initialForm;
-    _forms = [_initialForm];
+    _forms = [initialForm];
     _formsController.add(_forms);
     _currentFormController.add(initialForm);
     _currentQuestionController.add(initialForm.questions.first);
@@ -100,7 +95,6 @@ class DynamicFormUIBloc {
     _currentQuestionController.add(question);
 
     _updateButtonStatus();
-    if (_sendAnalyticsEvent != null) _sendAnalyticsEvent("question_answered");
   }
 
   void saveAndRestartForm() {
@@ -121,10 +115,10 @@ class DynamicFormUIBloc {
     for (Map answerData in currentFormResults.value.values) {
       if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
         if (answerData["value"] is String)
-          _forms.add(_getDynamicFormWithId(answerData["value"]));
+          _forms.add(getDynamicFormWithId(answerData["value"]));
         else if (answerData["value"] is List)
           for (String formId in answerData["value"])
-            _forms.add(_getDynamicFormWithId(formId));
+            _forms.add(getDynamicFormWithId(formId));
 
         _formsController.add(_forms);
       }
@@ -188,7 +182,7 @@ class DynamicFormUIBloc {
 
         if (filters.isNotEmpty) {
           ConsumptionProduct consumptionProduct =
-              await _getConsumptionProduct(filters);
+              await getConsumptionProduct(filters);
           // If there are multiple units of the same product we add them as SubProducts
           if (units != null) {
             consumptionProduct.subProducts = [];
@@ -209,8 +203,8 @@ class DynamicFormUIBloc {
         }
       }
       // Upload the results to Firestore
-      _uploadFormResults(_formResults);
-      _sendAnalyticsEvent("form_completed");
+      uploadFormResults(_formResults);
+      sendFormCompletedAnalyticsEvent();
     }
 
     return consumptionProducts;

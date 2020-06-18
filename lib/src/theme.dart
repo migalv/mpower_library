@@ -35,6 +35,7 @@ ThemeData buildMPowerTheme() {
     chipTheme: _buildMPowerChipTheme(),
     buttonTheme: _buildMPowerButtonTheme(base.buttonTheme),
     floatingActionButtonTheme: _buildFABTheme(),
+    cursorColor: secondaryMain,
   );
   return mPowerTheme;
 }

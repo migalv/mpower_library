@@ -44,12 +44,24 @@ class DynamicFormUI extends StatelessWidget {
           ? Container()
           : Column(
               children: [
+                _buildMpowerLogo(context),
                 _buildTitlesScroll(context),
                 _buildQuestionCarousel(context),
               ],
             ),
     );
   }
+
+  Widget _buildMpowerLogo(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Image.network(
+          "https://firebasestorage.googleapis.com/v0/b/mpower-dashboard-components.appspot.com/o/assets%2Fmpower_logos%2Flogo-con-text.svg?alt=media&token=3d4fd611-cff2-4a2a-b752-64d935902b29",
+          width: MediaQuery.of(context).size.height <= 768
+              ? MediaQuery.of(context).size.height / 10
+              : MediaQuery.of(context).size.height / 8,
+          color: Color.fromRGBO(0, 54, 103, 1),
+        ),
+      );
 
   Widget _buildTitlesScroll(BuildContext context) {
     List<Widget> titles = [];
@@ -64,16 +76,19 @@ class DynamicFormUI extends StatelessWidget {
 
     return isKeyboardVisible == false
         ? Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: titles.length > 3
-                  ? titles
-                      .getRange(
-                          currentFormIndex - 3 < 0 ? 0 : currentFormIndex - 3,
-                          currentFormIndex)
-                      .toList()
-                  : titles,
+            child: Container(
+              constraints: BoxConstraints(maxWidth: 480.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: titles.length > 3
+                    ? titles
+                        .getRange(
+                            currentFormIndex - 3 < 0 ? 0 : currentFormIndex - 2,
+                            currentFormIndex + 1)
+                        .toList()
+                    : titles,
+              ),
             ),
           )
         : Container();
@@ -81,8 +96,8 @@ class DynamicFormUI extends StatelessWidget {
 
   Widget _buildQuestionCarousel(BuildContext context) {
     double cardWidth = min(MediaQuery.of(context).size.width - 70, 480.0);
-    double cardHeight = MediaQuery.of(context).size.width < 480.0
-        ? cardWidth + MediaQuery.of(context).size.width * 0.15
+    double cardHeight = MediaQuery.of(context).size.height <= 768.0
+        ? MediaQuery.of(context).size.height / 2
         : cardWidth;
     double padding = 18.0;
 

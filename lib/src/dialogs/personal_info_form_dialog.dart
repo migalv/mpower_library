@@ -25,16 +25,12 @@ class PersonalInfoFormDialog extends StatelessWidget {
           title ?? "",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: Theme(
-          data: ThemeData(
-            primaryColor: secondaryMain,
-            cursorColor: secondaryMain,
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        content: Form(
+          key: _formKey,
+          child: Container(
+            width: 256.0,
+            height: 232.0,
+            child: ListView(
               children: [
                 _buildTextField(
                   "Name",
@@ -85,27 +81,30 @@ class PersonalInfoFormDialog extends StatelessWidget {
   }) =>
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: TextFormField(
-          validator: isRequired
-              ? (val) {
-                  if (val == null ||
-                      val == "" ||
-                      (minLength != null && val.length < minLength))
-                    return "Enter a valid $label";
-                  return null;
-                }
-              : null,
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: textInputFormatters,
-          decoration: InputDecoration(
-            labelText: label,
-            prefixIcon: Icon(iconData),
-            filled: true,
-            border: UnderlineInputBorder(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0),
-                topRight: Radius.circular(8.0),
+        child: Theme(
+          data: ThemeData(primaryColor: secondaryMain),
+          child: TextFormField(
+            validator: isRequired
+                ? (val) {
+                    if (val == null ||
+                        val == "" ||
+                        (minLength != null && val.length < minLength))
+                      return "Enter a valid $label";
+                    return null;
+                  }
+                : null,
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: textInputFormatters,
+            decoration: InputDecoration(
+              labelText: label,
+              prefixIcon: Icon(iconData),
+              filled: true,
+              border: UnderlineInputBorder(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
+                ),
               ),
             ),
           ),

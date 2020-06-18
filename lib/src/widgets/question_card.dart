@@ -380,7 +380,8 @@ class _QuestionCardState extends State<QuestionCard> {
                 ? Color(0x20FFC107)
                 : null,
             child: Container(
-              padding: EdgeInsets.all(12),
+              padding: EdgeInsets.all(
+                  MediaQuery.of(context).size.height <= 680 ? 8 : 12),
               width: double.infinity,
               child: Text(
                 answer.label['en'],

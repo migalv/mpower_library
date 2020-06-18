@@ -243,9 +243,20 @@ class _QuestionCardState extends State<QuestionCard> {
               Positioned.fill(
                 child: Image.network(
                   answer.imageUrl,
-                  frameBuilder: (_, child, __, isLoaded) => isLoaded
+                  frameBuilder: (_, child, frame, isLoaded) => isLoaded
                       ? FittedBox(child: child)
-                      : Center(child: CircularProgressIndicator()),
+                      : Stack(
+                          children: [
+                            Center(child: CircularProgressIndicator()),
+                            Center(
+                              child: AnimatedOpacity(
+                                opacity: frame == null ? 0 : 1,
+                                duration: Duration(seconds: 1),
+                                child: child,
+                              ),
+                            ),
+                          ],
+                        ),
                   errorBuilder: (_, __, ___) {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -426,10 +437,19 @@ class _QuestionCardState extends State<QuestionCard> {
                     flex: 3,
                     child: Image.network(
                       product.imageURL,
-                      frameBuilder: (_, widget, __, isLoaded) => isLoaded
-                          ? widget
-                          : Center(
-                              child: CircularProgressIndicator(),
+                      frameBuilder: (_, child, frame, isLoaded) => isLoaded
+                          ? FittedBox(child: child)
+                          : Stack(
+                              children: [
+                                Center(child: CircularProgressIndicator()),
+                                Center(
+                                  child: AnimatedOpacity(
+                                    opacity: frame == null ? 0 : 1,
+                                    duration: Duration(seconds: 1),
+                                    child: child,
+                                  ),
+                                ),
+                              ],
                             ),
                       errorBuilder: (_, __, ___) => Icon(
                         MdiIcons.tag,

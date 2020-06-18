@@ -8,6 +8,7 @@ class ReviewPage extends StatefulWidget {
   final List<ConsumptionProduct> mPowerProducts;
   final Function createCustomerLead, sendAnalyticsEvent;
   final bool showContactForm;
+  final List<String> emailList;
 
   const ReviewPage({
     Key key,
@@ -17,6 +18,7 @@ class ReviewPage extends StatefulWidget {
     @required this.createCustomerLead,
     @required this.showContactForm,
     @required this.sendAnalyticsEvent,
+    this.emailList,
   }) : super(key: key);
 
   @override
@@ -250,17 +252,21 @@ class _ReviewPageState extends State<ReviewPage> {
                 );
                 widget.sendAnalyticsEvent("contact_form_completed_last");
               }
-              widget.createCustomerLead(contactInfo: contactInfo, extraInfo: {
-                "customer_selection": {
-                  "mPowerProducts": widget.mPowerProducts
-                      ?.map((prod) => prod.toJson())
-                      ?.toList(),
-                  "customerProducts": widget.customerProducts
-                      ?.map((prod) => prod.toJson())
-                      ?.toList(),
-                  "bundle": widget.bundle?.toJson(),
+              widget.createCustomerLead(
+                contactInfo: contactInfo,
+                extraInfo: {
+                  "customer_selection": {
+                    "mPowerProducts": widget.mPowerProducts
+                        ?.map((prod) => prod.toJson())
+                        ?.toList(),
+                    "customerProducts": widget.customerProducts
+                        ?.map((prod) => prod.toJson())
+                        ?.toList(),
+                    "bundle": widget.bundle?.toJson(),
+                  },
                 },
-              });
+                emailList: widget.emailList,
+              );
               setState(() => hasConfirmed = true);
             },
           ),

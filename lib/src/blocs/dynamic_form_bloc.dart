@@ -199,7 +199,9 @@ class DynamicFormUIBloc {
         }
       }
       // Upload the results to Firestore
-      uploadFormResults(_formResults);
+      uploadFormResults(
+        _formResults,
+      );
     }
 
     return consumptionProducts;

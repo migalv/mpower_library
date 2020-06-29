@@ -20,10 +20,12 @@ class PersonalInfoFormDialog extends StatelessWidget {
         return Future.value(false);
       },
       child: AlertDialog(
-        useMaterialBorderRadius: true,
         title: Text(
           title ?? "",
           style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
         ),
         content: Form(
           key: _formKey,

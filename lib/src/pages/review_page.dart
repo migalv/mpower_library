@@ -9,6 +9,7 @@ class ReviewPage extends StatefulWidget {
   final Function createCustomerLead, sendAnalyticsEvent;
   final bool showContactForm;
   final List<String> emailList;
+  final bool showConfirmation;
 
   const ReviewPage({
     Key key,
@@ -19,23 +20,61 @@ class ReviewPage extends StatefulWidget {
     @required this.showContactForm,
     @required this.sendAnalyticsEvent,
     this.emailList,
+    this.showConfirmation = false,
   }) : super(key: key);
 
   @override
-  _ReviewPageState createState() => _ReviewPageState();
+  _ReviewPageState createState() =>
+      _ReviewPageState(showConfirmation: showConfirmation);
 }
 
 class _ReviewPageState extends State<ReviewPage> {
-  bool hasConfirmed = false;
+  bool showConfirmation;
   final tabletBreakpoint = 768.0;
   final smallDevicesBreakpoint = 375.0;
+
+  _ReviewPageState({this.showConfirmation = false});
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (showConfirmation == true) {
+        Map<String, Map> contactInfo;
+        if (widget.showContactForm) {
+          widget.sendAnalyticsEvent("contact_form_shown_last");
+          contactInfo = await showDialog(
+            context: context,
+            builder: (_) => PersonalInfoFormDialog(
+              title: "Tell us a little more about yourself",
+            ),
+          );
+          widget.sendAnalyticsEvent("contact_form_completed_last");
+        }
+        widget.createCustomerLead(
+          contactInfo: contactInfo,
+          extraInfo: {
+            "customer_selection": {
+              "mPowerProducts":
+                  widget.mPowerProducts?.map((prod) => prod.toJson())?.toList(),
+              "customerProducts": widget.customerProducts
+                  ?.map((prod) => prod.toJson())
+                  ?.toList(),
+              "bundle": widget.bundle?.toJson(),
+            },
+          },
+          emailList: widget.emailList,
+        );
+      }
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF42515A),
       body: SafeArea(
-        child: hasConfirmed
+        child: showConfirmation
             ? ConfirmationWidget()
             : Stack(
                 alignment: Alignment.center,
@@ -267,7 +306,7 @@ class _ReviewPageState extends State<ReviewPage> {
                 },
                 emailList: widget.emailList,
               );
-              setState(() => hasConfirmed = true);
+              setState(() => showConfirmation = true);
             },
           ),
         ),

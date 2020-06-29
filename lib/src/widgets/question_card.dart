@@ -4,6 +4,7 @@ import 'package:cons_calc_lib/src/widgets/custom_expansion_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/services.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class QuestionCard extends StatefulWidget {
@@ -267,7 +268,6 @@ class _QuestionCardState extends State<QuestionCard> {
                           size: 32.0,
                         ),
                         SizedBox(height: 8.0),
-                        // TODO TRANSLATE
                         Text(
                           "Unable to download image",
                           style: Theme.of(context).textTheme.subtitle2,
@@ -353,11 +353,18 @@ class _QuestionCardState extends State<QuestionCard> {
             : Theme.of(context).canvasColor,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 8.0),
-          child: TextField(
+          child: TextFormField(
             controller: textFieldControllers[answer.id],
+            inputFormatters: answer.valueType == "NUMBER"
+                ? [WhitelistingTextInputFormatter.digitsOnly]
+                : [],
+            keyboardType: answer.valueType == "NUMBER"
+                ? TextInputType.number
+                : TextInputType.text,
             decoration: InputDecoration(
-              // TODO ENABLE LANGUAGES
-              hintText: answer.label["en"],
+              hintText: answer.label["en"] == null || answer.label["en"] == ""
+                  ? "Tap to start typing"
+                  : answer.label["en"],
               isDense: true,
               isCollapsed: false,
               hintStyle: Theme.of(context)
@@ -365,9 +372,15 @@ class _QuestionCardState extends State<QuestionCard> {
                   .subtitle2
                   .copyWith(fontWeight: FontWeight.w600, color: Colors.black45),
             ),
-            onChanged: (text) => widget.setValue(answer, text),
-            onTap: () =>
-                widget.setValue(answer, textFieldControllers[answer.id].text),
+            onChanged: (text) {
+              if (text != null && text.length > 0)
+                widget.setValue(answer, text);
+            },
+            onTap: () {
+              if (textFieldControllers[answer.id].text != null &&
+                  textFieldControllers[answer.id].text.length > 0)
+                widget.setValue(answer, textFieldControllers[answer.id].text);
+            },
           ),
         ),
       ),

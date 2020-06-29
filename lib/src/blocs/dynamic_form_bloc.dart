@@ -81,6 +81,7 @@ class DynamicFormUIBloc {
   }
 
   void nextQuestion() {
+    print("Next question");
     _previousQuestionsController
         .add(previousQuestions.value..add(currentQuestion.value.id));
 
@@ -110,7 +111,7 @@ class DynamicFormUIBloc {
 
     for (Map answerData in currentFormResults.value.values) {
       if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
-        if (answerData["value"] is String)
+        if (answerData["value"] is String && answerData["value"] != null)
           _forms.add(getDynamicFormWithId(answerData["value"]));
         else if (answerData["value"] is List)
           for (String formId in answerData["value"])
@@ -122,6 +123,7 @@ class DynamicFormUIBloc {
 
     // There are more forms to show
     if (_forms.length > _currentFormIndex + 1) {
+      print("More forms to show");
       _currentFormIndex++;
       _previousQuestionsController.add([]);
 
@@ -132,6 +134,7 @@ class DynamicFormUIBloc {
       _updateButtonStatus();
     } // It's the last form
     else {
+      print("No more forms to show");
       double extraConsumption = 0.0;
 
       // For each form we recollect the answers for the consumption questions
@@ -141,28 +144,24 @@ class DynamicFormUIBloc {
         List filters = [];
         questionsMap.forEach(
           (questionId, answersMap) {
+            print("Calculating question: $questionId");
             if (answersMap['question_purpose'] == QuestionPurpose.CONSUMPTION &&
                 answersMap['value'] != null &&
                 answersMap['key'] != null) {
               var value = answersMap['value'];
-              if (answersMap[Question.TABLE_ID] == Question.JUST_VALUE)
-                extraConsumption += value;
-              else {
-                // Transform number range into its mean
-                if (value is String &&
-                    value.contains('-') &&
-                    !value.contains(' - ')) {
-                  int floor =
-                      int.tryParse(value.substring(0, value.indexOf('-')));
-                  int ceil = int.tryParse(
-                      value.substring(value.indexOf('-') + 1, value.length));
+              // Transform number range into its mean
+              if (value is String &&
+                  value.contains('-') &&
+                  !value.contains(' - ')) {
+                int floor =
+                    int.tryParse(value.substring(0, value.indexOf('-')));
+                int ceil = int.tryParse(
+                    value.substring(value.indexOf('-') + 1, value.length));
 
-                  if (floor != null && ceil != null)
-                    answersMap['value'] =
-                        ((floor + ceil) / 2).toStringAsFixed(0);
-                }
-                filters.add(answersMap);
+                if (floor != null && ceil != null)
+                  answersMap['value'] = ((floor + ceil) / 2).toStringAsFixed(0);
               }
+              filters.add(answersMap);
             } else if (answersMap['question_purpose'] ==
                     QuestionPurpose.NUM_OF_UNITS &&
                 answersMap['value'] != null)
@@ -176,7 +175,10 @@ class DynamicFormUIBloc {
           },
         );
 
+        print("Finished questions");
+
         if (filters.isNotEmpty) {
+          print("Calculating consumption");
           ConsumptionProduct consumptionProduct =
               await getConsumptionProduct(filters);
           // If there are multiple units of the same product we add them as SubProducts
@@ -195,13 +197,12 @@ class DynamicFormUIBloc {
           }
 
           consumptionProducts.add(consumptionProduct);
-          // TODO ADD THE EXTRA CONSUMPTION
         }
       }
       // Upload the results to Firestore
-      uploadFormResults(
-        _formResults,
-      );
+      print("Uploading form results");
+      uploadFormResults(_formResults);
+      print("Form results uploaded");
     }
 
     return consumptionProducts;

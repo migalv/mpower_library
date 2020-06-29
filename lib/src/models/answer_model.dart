@@ -7,6 +7,7 @@ class Answer {
   final bool isDefault;
   final bool restartForm;
   final String imageUrl;
+  final String valueType;
   dynamic _value;
   dynamic get value => _value;
 
@@ -20,6 +21,7 @@ class Answer {
     this.isDefault = false,
     this.restartForm,
     this.imageUrl,
+    this.valueType,
   }) : _value = value;
 
   Answer.fromJson(Map<String, dynamic> json)
@@ -32,7 +34,8 @@ class Answer {
         this.isDefault = json[DEFAULT] ?? false,
         this.type = json[TYPE] != null ? AnswerType.values[json[TYPE]] : null,
         this.restartForm = json[RESTART_FORM] ?? false,
-        this.imageUrl = json[IMAGE_URL];
+        this.imageUrl = json[IMAGE_URL],
+        this.valueType = json[VALUE_TYPE];
 
   void setNewValue(dynamic newValue) => _value = newValue;
 
@@ -46,6 +49,7 @@ class Answer {
   static const String FINISH_FORM = "END";
   static const String RESTART_FORM = "restart_form";
   static const String IMAGE_URL = "image_url";
+  static const String VALUE_TYPE = "value_type";
 }
 
 enum AnswerType {

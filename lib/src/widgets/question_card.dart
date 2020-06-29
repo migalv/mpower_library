@@ -48,6 +48,7 @@ class _QuestionCardState extends State<QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
+    print('building question ${widget.question.id} ...');
     return StreamBuilder<Question>(
         stream: widget.currentQuestionStream,
         builder: (context, snapshot) {
@@ -361,6 +362,23 @@ class _QuestionCardState extends State<QuestionCard> {
             keyboardType: answer.valueType == "NUMBER"
                 ? TextInputType.number
                 : TextInputType.text,
+            autovalidate: true,
+            validator: (String value) {
+              if (answer.validators.containsKey("min_length") &&
+                  answer.validators["min_length"] != null) {
+                if (value.length <
+                    (int.tryParse(answer.validators["min_length"]) ?? 1))
+                  return "Min. length ${answer.validators['min_length']}";
+              }
+              if (answer.validators.containsKey("max_length") &&
+                  answer.validators["max_length"] != null) {
+                if (value.length >
+                    (int.tryParse(answer.validators["max_length"]) ?? 1))
+                  return "Max. length ${answer.validators['max_length']}";
+              }
+              return null;
+            },
+            maxLines: 1,
             decoration: InputDecoration(
               hintText: answer.label["en"] == null || answer.label["en"] == ""
                   ? "Tap to start typing"
@@ -372,9 +390,14 @@ class _QuestionCardState extends State<QuestionCard> {
                   .subtitle2
                   .copyWith(fontWeight: FontWeight.w600, color: Colors.black45),
             ),
-            onChanged: (text) {
+            onFieldSubmitted: (text) {
               if (text != null && text.length > 0)
                 widget.setValue(answer, text);
+            },
+            onEditingComplete: () {
+              if (textFieldControllers[answer.id].text != null &&
+                  textFieldControllers[answer.id].text.length > 0)
+                widget.setValue(answer, textFieldControllers[answer.id].text);
             },
             onTap: () {
               if (textFieldControllers[answer.id].text != null &&

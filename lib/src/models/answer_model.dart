@@ -8,6 +8,7 @@ class Answer {
   final bool restartForm;
   final String imageUrl;
   final String valueType;
+  final Map<String, dynamic> validators;
   dynamic _value;
   dynamic get value => _value;
 
@@ -22,6 +23,7 @@ class Answer {
     this.restartForm,
     this.imageUrl,
     this.valueType,
+    this.validators,
   }) : _value = value;
 
   Answer.fromJson(Map<String, dynamic> json)
@@ -35,7 +37,8 @@ class Answer {
         this.type = json[TYPE] != null ? AnswerType.values[json[TYPE]] : null,
         this.restartForm = json[RESTART_FORM] ?? false,
         this.imageUrl = json[IMAGE_URL],
-        this.valueType = json[VALUE_TYPE];
+        this.valueType = json[VALUE_TYPE],
+        this.validators = json[VALIDATORS] ?? {};
 
   void setNewValue(dynamic newValue) => _value = newValue;
 
@@ -50,6 +53,7 @@ class Answer {
   static const String RESTART_FORM = "restart_form";
   static const String IMAGE_URL = "image_url";
   static const String VALUE_TYPE = "value_type";
+  static const String VALIDATORS = "validators";
 }
 
 enum AnswerType {

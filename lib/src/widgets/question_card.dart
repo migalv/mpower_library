@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/services.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class QuestionCard extends StatefulWidget {
   final ButtonStatus nextButtonStatus;
@@ -48,7 +49,6 @@ class _QuestionCardState extends State<QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
-    print('building question ${widget.question.id} ...');
     return StreamBuilder<Question>(
         stream: widget.currentQuestionStream,
         builder: (context, snapshot) {
@@ -344,8 +344,24 @@ class _QuestionCardState extends State<QuestionCard> {
       );
 
   Widget _buildInputAnswer(String questionId, Answer answer) {
+    List<TextInputFormatter> inputFormatters = [];
+    TextInputType inputType = TextInputType.text;
+
     if (textFieldControllers[answer.id] == null)
       textFieldControllers[answer.id] = TextEditingController();
+
+    if (answer.valueType == "NUMBER") {
+      inputFormatters.add(WhitelistingTextInputFormatter.digitsOnly);
+      inputType = TextInputType.number;
+    }
+
+    if (answer.validators.containsKey("input_format") &&
+        answer.validators["input_format"] != null) {
+      var maskFormatter = MaskTextInputFormatter(
+          mask: answer.validators["input_format"],
+          filter: {"#": RegExp(r'[0-9]')});
+      inputFormatters.add(maskFormatter);
+    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Material(
@@ -356,12 +372,8 @@ class _QuestionCardState extends State<QuestionCard> {
           padding: const EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 8.0),
           child: TextFormField(
             controller: textFieldControllers[answer.id],
-            inputFormatters: answer.valueType == "NUMBER"
-                ? [WhitelistingTextInputFormatter.digitsOnly]
-                : [],
-            keyboardType: answer.valueType == "NUMBER"
-                ? TextInputType.number
-                : TextInputType.text,
+            inputFormatters: inputFormatters,
+            keyboardType: inputType,
             autovalidate: true,
             validator: (String value) {
               if (answer.validators.containsKey("min_length") &&

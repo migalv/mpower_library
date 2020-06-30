@@ -19,6 +19,7 @@ dependencies:
   intl: ^0.16.1
   carousel_slider: ^2.1.0
   cached_network_image: 2.0.0-rc.1
+  mask_text_input_formatter: ^1.0.7
 
 dev_dependencies:
   flutter_test:

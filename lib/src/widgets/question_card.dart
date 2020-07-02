@@ -5,14 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class QuestionCard extends StatefulWidget {
-  final ButtonStatus nextButtonStatus;
   final Question question;
   final Function isBackButtonVisible,
-      isSelected,
       setValue,
       goToPreviousQuestion,
       goToNextQuestion,
@@ -20,13 +19,11 @@ class QuestionCard extends StatefulWidget {
       saveAndRestartForm;
   final Stream<Question> currentQuestionStream;
   final double cardWidth, cardHeight;
-  final bool isKeyboardVisible;
+  final GlobalKey<FormState> formKey;
 
   QuestionCard({
     @required this.question,
-    @required this.nextButtonStatus,
     @required this.isBackButtonVisible,
-    @required this.isSelected,
     @required this.setValue,
     @required this.finishAndSaveForm,
     @required this.goToPreviousQuestion,
@@ -35,7 +32,7 @@ class QuestionCard extends StatefulWidget {
     @required this.currentQuestionStream,
     @required this.cardWidth,
     @required this.cardHeight,
-    @required this.isKeyboardVisible,
+    @required this.formKey,
   });
 
   @override
@@ -46,6 +43,23 @@ class _QuestionCardState extends State<QuestionCard> {
   final verticalInset = 18.0;
   final padding = 18.0;
   Map<String, TextEditingController> textFieldControllers = {};
+  DynamicFormBloc dynamicFormBloc;
+  bool isKeyboardVisible = false;
+
+  @override
+  void initState() {
+    KeyboardVisibility.onChange.listen((bool visible) {
+      print("Keyboard visibility changed to $visible");
+      setState(() => isKeyboardVisible = visible);
+    });
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    dynamicFormBloc = Provider.of<DynamicFormBloc>(context);
+    super.didChangeDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,11 +117,10 @@ class _QuestionCardState extends State<QuestionCard> {
                     : 0.0,
                 child: Container(
                   width: widget.cardWidth,
-                  height: widget.cardHeight -
-                      (widget.isKeyboardVisible ? 160.0 : 0.0),
+                  height: widget.cardHeight - (isKeyboardVisible ? 160.0 : 0.0),
                   child: Column(
                     children: [
-                      _question(),
+                      _buildQuestion(),
                       isCurrentQuestion ? _buildButtonsRow() : Container(),
                     ],
                   ),
@@ -143,30 +156,34 @@ class _QuestionCardState extends State<QuestionCard> {
 
   Widget _nextButton() => Align(
         alignment: Alignment.bottomCenter,
-        child: FlatButton(
-          color: secondaryMain,
-          onPressed: widget.nextButtonStatus == ButtonStatus.DISABLED
-              ? null
-              : () {
-                  switch (widget.nextButtonStatus) {
-                    case ButtonStatus.NEXT:
-                      _nextQuestion();
-                      break;
-                    case ButtonStatus.FINISH:
-                      _finishForm();
-                      break;
-                    case ButtonStatus.RESTART:
-                      _restartForm();
-                      break;
-                    default:
-                      break;
-                  }
-                },
-          child: Text('next'),
+        child: StreamBuilder<ButtonStatus>(
+          initialData: ButtonStatus.DISABLED,
+          stream: dynamicFormBloc.nextButtonStatus,
+          builder: (context, nextButtonStatusSnapshot) => FlatButton(
+            color: secondaryMain,
+            onPressed: nextButtonStatusSnapshot.data == ButtonStatus.DISABLED
+                ? null
+                : () {
+                    switch (nextButtonStatusSnapshot.data) {
+                      case ButtonStatus.NEXT:
+                        _nextQuestion();
+                        break;
+                      case ButtonStatus.FINISH:
+                        _finishForm();
+                        break;
+                      case ButtonStatus.RESTART:
+                        _restartForm();
+                        break;
+                      default:
+                        break;
+                    }
+                  },
+            child: Text('next'),
+          ),
         ),
       );
 
-  Widget _question() => Expanded(
+  Widget _buildQuestion() => Expanded(
         child: widget.question == null
             ? Container()
             : Column(
@@ -178,35 +195,66 @@ class _QuestionCardState extends State<QuestionCard> {
                       style: Theme.of(context).textTheme.subtitle1,
                     ),
                   ),
-                  _answers(widget.question.id, widget.question.answers)
+                  _buildAnswers(widget.question.id, widget.question.answers)
                 ],
               ),
       );
 
-  Widget _answers(String questionId, List<Answer> answers) => Expanded(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24.0),
-          children: answers
-                  .any((answer) => answer.type == AnswerType.IMAGE_OPTION)
-              ? _buildAnswerWithImages(questionId, answers)
-              : answers
-                  .map((answer) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: answer.type == AnswerType.SELECT
-                            ? _buildSelectAnswer(questionId, answer)
-                            : answer.type == AnswerType.INPUT
-                                ? _buildInputAnswer(questionId, answer)
-                                : answer.type == AnswerType.PRODUCT_LIST
-                                    ? _buildProductListAnswer(
-                                        questionId, answer)
-                                    : _buildOptionAnswer(questionId, answer),
-                      ))
-                  .toList()
-                  .cast<Widget>(),
-        ),
-      );
+  Widget _buildAnswers(String questionId, List<Answer> answers) =>
+      StreamBuilder<Map>(
+          stream: dynamicFormBloc.currentFormResults,
+          builder: (context, currentFormResultsSnapshot) {
+            Map questionResults;
+            if (currentFormResultsSnapshot.data != null)
+              questionResults = currentFormResultsSnapshot.data[questionId];
+            return Expanded(
+              child: ListView(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24.0),
+                children: answers
+                        .any((answer) => answer.type == AnswerType.IMAGE_OPTION)
+                    ? _buildAnswerWithImages(
+                        questionId, answers, questionResults)
+                    : answers
+                        .map((answer) =>
+                            _buildAnswer(questionId, answer, questionResults))
+                        .toList()
+                        .cast<Widget>(),
+              ),
+            );
+          });
 
-  List<Widget> _buildAnswerWithImages(String questionId, List<Answer> answers) {
+  Widget _buildAnswer(String questionId, Answer answer, Map questionResults) {
+    Widget answerWidget;
+    bool answerIsSelected = isAnswerSelected(answer, questionResults);
+
+    switch (answer.type) {
+      case AnswerType.SELECT:
+        answerWidget = _buildSelectAnswer(questionId, answer, answerIsSelected);
+        break;
+      case AnswerType.OPTION:
+        answerWidget = _buildOptionAnswer(questionId, answer, answerIsSelected);
+        break;
+      case AnswerType.INPUT:
+        answerWidget = _buildInputAnswer(questionId, answer, answerIsSelected);
+        break;
+      case AnswerType.PRODUCT_LIST:
+        answerWidget =
+            _buildProductListAnswer(questionId, answer, questionResults);
+        break;
+      case AnswerType.IMAGE_OPTION:
+        answerWidget = _buildOptionAnswer(questionId, answer, answerIsSelected);
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: answerWidget,
+    );
+  }
+
+  List<Widget> _buildAnswerWithImages(
+      String questionId, List<Answer> answers, Map questionResults) {
     List<Widget> widgets = [];
     List<Answer> answersWithImage = answers
         .where((answer) => answer.type == AnswerType.IMAGE_OPTION)
@@ -221,23 +269,30 @@ class _QuestionCardState extends State<QuestionCard> {
         enlargeCenterPage: true,
       ),
       items: answersWithImage
-          .map((answer) => _buildImageCard(questionId, answer))
+          .map((answer) {
+            bool isSelected = isAnswerSelected(answer, questionResults);
+            return _buildImageCard(questionId, answer, isSelected);
+          })
           .cast<Widget>()
           .toList(),
     ));
 
     widgets.addAll(answersWithoutImages
-        .map((answer) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: _buildOptionAnswer(questionId, answer),
-            ))
+        .map((answer) {
+          bool isSelected = isAnswerSelected(answer, questionResults);
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: _buildOptionAnswer(questionId, answer, isSelected),
+          );
+        })
         .cast<Widget>()
         .toList());
 
     return widgets;
   }
 
-  Widget _buildImageCard(String questionId, Answer answer) => Card(
+  Widget _buildImageCard(String questionId, Answer answer, bool isSelected) =>
+      Card(
         child: Container(
           width: MediaQuery.of(context).size.width / 2 + 32.0,
           child: Stack(
@@ -278,7 +333,7 @@ class _QuestionCardState extends State<QuestionCard> {
                   },
                 ),
               ),
-              widget.isSelected(questionId, answer)
+              isSelected
                   ? Container(
                       decoration: BoxDecoration(
                         color: secondaryMain.withOpacity(0.3),
@@ -309,13 +364,14 @@ class _QuestionCardState extends State<QuestionCard> {
         ),
       );
 
-  Widget _buildSelectAnswer(String questionId, Answer answer) =>
+  Widget _buildSelectAnswer(
+          String questionId, Answer answer, bool isSelected) =>
       CustomExpansionTile(
         selectedColor: secondaryMain,
         title: Text(answer.label['en']),
         onExpansionChanged: (expanded) =>
             expanded ? widget.setValue(answer, answer.value[0]) : null,
-        initiallyExpanded: widget.isSelected(questionId, answer),
+        initiallyExpanded: isSelected,
         children: [
           Container(
             height: MediaQuery.of(context).size.height / 5,
@@ -343,8 +399,9 @@ class _QuestionCardState extends State<QuestionCard> {
         ],
       );
 
-  Widget _buildInputAnswer(String questionId, Answer answer) {
+  Widget _buildInputAnswer(String questionId, Answer answer, bool isSelected) {
     List<TextInputFormatter> inputFormatters = [];
+    List<String Function(String)> validators = [];
     TextInputType inputType = TextInputType.text;
 
     if (textFieldControllers[answer.id] == null)
@@ -355,45 +412,51 @@ class _QuestionCardState extends State<QuestionCard> {
       inputType = TextInputType.number;
     }
 
+    answer.validators.forEach((validatorKey, validatorValue) {
+      if (validatorKey == "input_format" && validatorValue != null) {
+        TextInputFormatter maskFormatter = MaskTextInputFormatter(
+            mask: validatorValue, filter: {"#": RegExp(r'[0-9]')});
+        inputFormatters.add(maskFormatter);
+      }
+      if (validatorKey == "min_length" && validatorValue != null) {
+        validators.add((strToValidate) {
+          if (strToValidate.length < (int.tryParse(validatorValue) ?? 1))
+            return "Min. length $validatorValue";
+          return null;
+        });
+      }
+      if (validatorKey == "max_length" && validatorValue != null) {
+        validators.add((strToValidate) {
+          if (strToValidate.length > (int.tryParse(validatorValue) ?? 1))
+            return "Max. length $validatorValue}";
+          return null;
+        });
+      }
+    });
+
     if (answer.validators.containsKey("input_format") &&
-        answer.validators["input_format"] != null) {
-      var maskFormatter = MaskTextInputFormatter(
-          mask: answer.validators["input_format"],
-          filter: {"#": RegExp(r'[0-9]')});
-      inputFormatters.add(maskFormatter);
-    }
+        answer.validators["input_format"] != null) {}
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Material(
-        color: widget.isSelected(questionId, answer)
-            ? Color(0x20FFC107)
-            : Theme.of(context).canvasColor,
+        color: isSelected ? Color(0x20FFC107) : Theme.of(context).canvasColor,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 8.0),
           child: TextFormField(
             controller: textFieldControllers[answer.id],
             inputFormatters: inputFormatters,
             keyboardType: inputType,
-            autovalidate: true,
             validator: (String value) {
-              if (answer.validators.containsKey("min_length") &&
-                  answer.validators["min_length"] != null) {
-                if (value.length <
-                    (int.tryParse(answer.validators["min_length"]) ?? 1))
-                  return "Min. length ${answer.validators['min_length']}";
-              }
-              if (answer.validators.containsKey("max_length") &&
-                  answer.validators["max_length"] != null) {
-                if (value.length >
-                    (int.tryParse(answer.validators["max_length"]) ?? 1))
-                  return "Max. length ${answer.validators['max_length']}";
+              for (var validator in validators) {
+                String result = validator(value);
+                if (result != null) return result;
               }
               return null;
             },
             maxLines: 1,
             decoration: InputDecoration(
               hintText: answer.label["en"] == null || answer.label["en"] == ""
-                  ? "Tap to start typing"
+                  ? "Tap to start typing..."
                   : answer.label["en"],
               isDense: true,
               isCollapsed: false,
@@ -402,42 +465,27 @@ class _QuestionCardState extends State<QuestionCard> {
                   .subtitle2
                   .copyWith(fontWeight: FontWeight.w600, color: Colors.black45),
             ),
-            onFieldSubmitted: (text) {
-              if (text != null && text.length > 0)
-                widget.setValue(answer, text);
-            },
-            onEditingComplete: () {
-              if (textFieldControllers[answer.id].text != null &&
-                  textFieldControllers[answer.id].text.length > 0)
-                widget.setValue(answer, textFieldControllers[answer.id].text);
-            },
-            onTap: () {
-              if (textFieldControllers[answer.id].text != null &&
-                  textFieldControllers[answer.id].text.length > 0)
-                widget.setValue(answer, textFieldControllers[answer.id].text);
-            },
+            onFieldSubmitted: (text) => widget.setValue(answer, text),
+            onTap: () =>
+                widget.setValue(answer, textFieldControllers[answer.id].text),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOptionAnswer(String questionId, Answer answer) => ClipRRect(
+  Widget _buildOptionAnswer(
+          String questionId, Answer answer, bool isSelected) =>
+      ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Material(
-          color: widget.isSelected(questionId, answer)
-              ? Color(0x20FFC107)
-              : Theme.of(context).canvasColor,
+          color: isSelected ? Color(0x20FFC107) : Theme.of(context).canvasColor,
           child: InkWell(
             onTap: () {
               widget.setValue(answer, answer.value);
             },
-            splashColor: widget.isSelected(questionId, answer)
-                ? Color(0x40FFC107)
-                : null,
-            highlightColor: widget.isSelected(questionId, answer)
-                ? Color(0x20FFC107)
-                : null,
+            splashColor: isSelected ? Color(0x40FFC107) : null,
+            highlightColor: isSelected ? Color(0x20FFC107) : null,
             child: Container(
               padding: EdgeInsets.all(
                   MediaQuery.of(context).size.height <= 680 ? 8 : 12),
@@ -446,9 +494,7 @@ class _QuestionCardState extends State<QuestionCard> {
                 answer.label['en'],
                 style: Theme.of(context).textTheme.subtitle2.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: widget.isSelected(questionId, answer)
-                          ? secondaryMain
-                          : Colors.black45,
+                      color: isSelected ? secondaryMain : Colors.black45,
                     ),
               ),
             ),
@@ -456,19 +502,25 @@ class _QuestionCardState extends State<QuestionCard> {
         ),
       );
 
-  Widget _buildProductListAnswer(String questionId, Answer answer) =>
+  Widget _buildProductListAnswer(
+          String questionId, Answer answer, Map questionResults) =>
       CarouselSlider(
         options: CarouselOptions(
           autoPlay: true,
           enlargeCenterPage: true,
         ),
         items: answer.value
-            .map((product) => _buildProductCard(product, questionId, answer))
+            .map((product) {
+              bool isSelected =
+                  isAnswerSelected(answer, questionResults, value: product);
+              return _buildProductCard(product, questionId, answer, isSelected);
+            })
             .cast<Widget>()
             .toList(),
       );
 
-  Widget _buildProductCard(dynamic product, String questionId, Answer answer) =>
+  Widget _buildProductCard(
+          dynamic product, String questionId, Answer answer, bool isSelected) =>
       Card(
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
@@ -532,7 +584,7 @@ class _QuestionCardState extends State<QuestionCard> {
                 ],
               ),
             ),
-            widget.isSelected(questionId, answer, value: product)
+            isSelected
                 ? Container(
                     decoration: BoxDecoration(
                       color: secondaryMain.withOpacity(0.3),
@@ -556,7 +608,8 @@ class _QuestionCardState extends State<QuestionCard> {
       );
 
   // METHODS
-  void _nextQuestion() => widget.goToNextQuestion();
+  void _nextQuestion() =>
+      widget.formKey.currentState.validate() ? widget.goToNextQuestion() : null;
 
   void _restartForm() => widget.saveAndRestartForm();
 
@@ -572,6 +625,20 @@ class _QuestionCardState extends State<QuestionCard> {
     }
 
     return valid;
+  }
+
+  /// Returns true if answer is the one currently selected
+  /// optional parameter "value", if not null checks if the value of the answer
+  /// is the same as the parameter "value"
+  bool isAnswerSelected(Answer answer, Map questionResults, {dynamic value}) {
+    if (questionResults != null && answer.id == questionResults[Answer.ID]) {
+      if (value != null) {
+        if (questionResults['value'] == value) return true;
+      } else
+        return true;
+    }
+
+    return false;
   }
 }
 

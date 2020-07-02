@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:rxdart/rxdart.dart';
 
-class DynamicFormUIBloc {
+class DynamicFormBloc {
   final DynamicForm initialForm;
   List<DynamicForm> _forms;
   Map<String, Map> _formResults;
@@ -51,7 +51,7 @@ class DynamicFormUIBloc {
 
   //
   // CONSTRUCTOR
-  DynamicFormUIBloc({
+  DynamicFormBloc({
     @required this.initialForm,
     @required this.getDynamicFormWithId,
     @required this.getConsumptionProduct,
@@ -81,7 +81,6 @@ class DynamicFormUIBloc {
   }
 
   void nextQuestion() {
-    print("Next question");
     _previousQuestionsController
         .add(previousQuestions.value..add(currentQuestion.value.id));
 
@@ -105,7 +104,7 @@ class DynamicFormUIBloc {
   }
 
   Future<List> finishAndSaveForm() async {
-    List consumptionProducts = [];
+    List consumptionProducts;
 
     _formResults[currentForm.value.id] = currentFormResults.value;
 
@@ -123,7 +122,6 @@ class DynamicFormUIBloc {
 
     // There are more forms to show
     if (_forms.length > _currentFormIndex + 1) {
-      print("More forms to show");
       _currentFormIndex++;
       _previousQuestionsController.add([]);
 
@@ -134,8 +132,8 @@ class DynamicFormUIBloc {
       _updateButtonStatus();
     } // It's the last form
     else {
-      print("No more forms to show");
       double extraConsumption = 0.0;
+      consumptionProducts = [];
 
       // For each form we recollect the answers for the consumption questions
       for (Map questionsMap in _formResults.values) {
@@ -144,7 +142,6 @@ class DynamicFormUIBloc {
         List filters = [];
         questionsMap.forEach(
           (questionId, answersMap) {
-            print("Calculating question: $questionId");
             if (answersMap['question_purpose'] == QuestionPurpose.CONSUMPTION &&
                 answersMap['value'] != null &&
                 answersMap['key'] != null) {
@@ -175,34 +172,31 @@ class DynamicFormUIBloc {
           },
         );
 
-        print("Finished questions");
-
         if (filters.isNotEmpty) {
-          print("Calculating consumption");
           ConsumptionProduct consumptionProduct =
               await getConsumptionProduct(filters);
-          // If there are multiple units of the same product we add them as SubProducts
-          if (units != null) {
-            consumptionProduct.subProducts = [];
-            for (int i = 0; i < units - 1; i++) {
-              // -1 because we already have 1 unit added
-              consumptionProduct.subProducts.add(
-                ConsumptionSubProduct(
-                  id: consumptionProduct.id,
-                  name: consumptionProduct.name,
-                  powerConsumption: consumptionProduct.powerConsumption,
-                ),
-              );
+          if (consumptionProduct != null) {
+            // If there are multiple units of the same product we add them as SubProducts
+            if (units != null) {
+              consumptionProduct.subProducts = [];
+              for (int i = 0; i < units - 1; i++) {
+                // -1 because we already have 1 unit added
+                consumptionProduct.subProducts.add(
+                  ConsumptionSubProduct(
+                    id: consumptionProduct.id,
+                    name: consumptionProduct.name,
+                    powerConsumption: consumptionProduct.powerConsumption,
+                  ),
+                );
+              }
             }
-          }
 
-          consumptionProducts.add(consumptionProduct);
+            consumptionProducts.add(consumptionProduct);
+          }
         }
       }
       // Upload the results to Firestore
-      print("Uploading form results");
       uploadFormResults(_formResults);
-      print("Form results uploaded");
     }
 
     return consumptionProducts;
@@ -233,22 +227,6 @@ class DynamicFormUIBloc {
         .add(_previousQuestionsController.value..removeLast());
 
     _updateButtonStatus();
-  }
-
-  /// Returns true if answer is the one currently selected
-  /// optional parameter "value", if not null checks if the value of the answer
-  /// is the same as the parameter "value"
-  bool isSelected(String questionId, Answer answer, {dynamic value}) {
-    if (currentFormResults.value != null &&
-        currentFormResults.value[questionId] != null &&
-        answer.id == currentFormResults.value[questionId][Answer.ID]) {
-      if (value != null) {
-        if (currentFormResults.value[questionId]['value'] == value) return true;
-      } else
-        return true;
-    }
-
-    return false;
   }
 
   bool isBackButtonVisible() =>

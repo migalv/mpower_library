@@ -1,7 +1,6 @@
 library cons_calc_lib;
 
 export './src/blocs/dynamic_form_bloc.dart';
-export './src/blocs/bundle_suggestion_bloc.dart';
 export './src/blocs/load_category_bloc.dart';
 export './src/models/answer_model.dart';
 export './src/models/consumption_product_model.dart';
@@ -10,8 +9,6 @@ export './src/models/product_bundle_model.dart';
 export './src/models/question_model.dart';
 export './src/pages/load_category_page.dart';
 export './src/pages/load_list_page.dart';
-export './src/pages/bundle_suggestion_page.dart';
-export './src/pages/review_page.dart';
 export './src/pages/dynamic_form_page.dart';
 export './src/widgets/consumption_card.dart';
 export './src/widgets/instructions_card.dart';
@@ -27,3 +24,4 @@ export './src/circular_reveal_route.dart';
 export './src/colors.dart';
 export './src/custom_cache_manager.dart';
 export './src/theme.dart';
+export './src/dynamic_forms_repository.dart';

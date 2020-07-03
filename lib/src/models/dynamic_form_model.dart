@@ -9,4 +9,9 @@ class DynamicForm {
   DynamicForm(this.id, this.questions, {this.title, this.emailList}) {
     this.questions.sort((q1, q2) => q1.index.compareTo(q2.index));
   }
+
+  @override
+  String toString() {
+    return "$id";
+  }
 }

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:cons_calc_lib/cons_calc_lib.dart';
@@ -9,61 +8,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 class DynamicFormPage extends StatefulWidget {
-  final DynamicForm currentForm;
-  final List<DynamicForm> forms;
-  final Stream currentQuestionStream;
-  final Function isBackButtonVisible,
-      setValue,
-      goToPreviousQuestion,
-      goToNextQuestion,
-      finishAndSaveForm,
-      saveAndRestartForm;
-
-  DynamicFormPage({
-    @required this.currentForm,
-    @required this.forms,
-    @required this.currentQuestionStream,
-    @required this.isBackButtonVisible,
-    @required this.setValue,
-    @required this.finishAndSaveForm,
-    @required this.goToPreviousQuestion,
-    @required this.goToNextQuestion,
-    @required this.saveAndRestartForm,
-  });
+  DynamicFormPage();
 
   @override
   _DynamicFormPageState createState() => _DynamicFormPageState();
 }
 
 class _DynamicFormPageState extends State<DynamicFormPage> {
-  Map<String, GlobalKey> formKeys = {};
-  bool isKeyboardVisible = false;
+  DynamicFormBloc _dynamicFormBloc;
 
   @override
-  void initState() {
+  void didChangeDependencies() {
+    _dynamicFormBloc = Provider.of<DynamicFormBloc>(context);
     KeyboardVisibility.onChange.listen((bool visible) {
-      setState(() => isKeyboardVisible = visible);
+      _dynamicFormBloc.updateKeyboardVisibility(visible);
     });
-    super.initState();
+    super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: secondaryMain,
-      body: widget.currentForm == null || widget.forms.isEmpty
-          ? Container()
-          : Column(
-              children: [
-                _buildMpowerLogo(context),
-                _buildTitlesScroll(context),
-                _buildQuestionCarousel(context),
-              ],
-            ),
+      body: Column(
+        children: [
+          _buildMpowerLogo(),
+          _buildTitlesScroll(),
+          _buildQuestionCarousel(),
+        ],
+      ),
     );
   }
 
-  Widget _buildMpowerLogo(BuildContext context) => Padding(
+  Widget _buildMpowerLogo() => Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Image.network(
           "https://firebasestorage.googleapis.com/v0/b/mpower-dashboard-components.appspot.com/o/assets%2Fmpower_logos%2Flogo-con-text.svg?alt=media&token=3d4fd611-cff2-4a2a-b752-64d935902b29",
@@ -74,72 +51,92 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         ),
       );
 
-  Widget _buildTitlesScroll(BuildContext context) {
-    List<Widget> titles = [];
-    int currentFormIndex = widget.forms.indexOf(widget.currentForm);
+  Widget _buildTitlesScroll() => StreamBuilder<List<DynamicForm>>(
+        stream: _dynamicFormBloc.forms,
+        initialData: [],
+        builder: (_, snapshotForms) => StreamBuilder<DynamicForm>(
+          stream: _dynamicFormBloc.currentForm,
+          builder: (_, currentFormSnapshot) {
+            DynamicForm currentForm;
+            List<DynamicForm> forms = snapshotForms.data;
 
-    for (int i = 0; i < widget.forms.length; i++)
-      titles.add(TitleForm(
-        formIndex: i,
-        currentFormIndex: currentFormIndex,
-        title: widget.forms[i].title,
-      ));
+            if (currentFormSnapshot.hasData == false ||
+                currentFormSnapshot.hasError)
+              return Center(child: CircularProgressIndicator());
+            else
+              currentForm = currentFormSnapshot.data;
 
-    return isKeyboardVisible == false
-        ? Expanded(
-            child: Container(
-              constraints: BoxConstraints(maxWidth: 480.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: titles.length > 3
-                    ? titles
-                        .getRange(
-                            currentFormIndex - 3 < 0 ? 0 : currentFormIndex - 2,
-                            currentFormIndex + 1)
-                        .toList()
-                    : titles,
-              ),
-            ),
-          )
-        : Container();
-  }
+            List<Widget> titles = [];
+            int currentFormIndex = forms.indexOf(currentForm);
 
-  Widget _buildQuestionCarousel(BuildContext context) {
-    double cardWidth = min(MediaQuery.of(context).size.width - 70, 480.0);
-    double cardHeight = MediaQuery.of(context).size.height <= 768.0
-        ? MediaQuery.of(context).size.height / 2
-        : cardWidth;
-    double padding = 18.0;
+            for (int i = 0; i < forms.length; i++)
+              titles.add(TitleForm(
+                formIndex: i,
+                currentFormIndex: currentFormIndex,
+                title: forms[i].title,
+              ));
 
-    if (formKeys.containsKey(widget.currentForm.id) == false)
-      formKeys[widget.currentForm.id] = GlobalKey<FormState>();
-
-    return Form(
-      key: formKeys[widget.currentForm.id],
-      child: Container(
-        height: cardHeight + padding * 2,
-        child: Stack(
-          children: widget.currentForm.questions
-              .map(
-                (question) => QuestionCard(
-                  cardWidth: cardWidth,
-                  cardHeight: cardHeight,
-                  currentQuestionStream: widget.currentQuestionStream,
-                  finishAndSaveForm: widget.finishAndSaveForm,
-                  goToNextQuestion: widget.goToNextQuestion,
-                  goToPreviousQuestion: widget.goToPreviousQuestion,
-                  setValue: widget.setValue,
-                  isBackButtonVisible: widget.isBackButtonVisible,
-                  saveAndRestartForm: widget.saveAndRestartForm,
-                  question: question,
-                  formKey: formKeys[widget.currentForm.id],
-                ),
-              )
-              .cast<Widget>()
-              .toList(),
+            return StreamBuilder<bool>(
+              stream: _dynamicFormBloc.isKeyboardVisible,
+              initialData: false,
+              builder: (_, keyboardVisibilitySnapshot) =>
+                  keyboardVisibilitySnapshot.data == false
+                      ? Expanded(
+                          child: Container(
+                            constraints: BoxConstraints(maxWidth: 480.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: titles.length > 3
+                                  ? titles
+                                      .getRange(
+                                          currentFormIndex - 3 < 0
+                                              ? 0
+                                              : currentFormIndex - 2,
+                                          currentFormIndex + 1)
+                                      .toList()
+                                  : titles,
+                            ),
+                          ),
+                        )
+                      : Container(),
+            );
+          },
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _buildQuestionCarousel() => StreamBuilder<DynamicForm>(
+        stream: _dynamicFormBloc.currentForm,
+        builder: (_, currentFormSnapshot) {
+          DynamicForm currentForm;
+
+          if (currentFormSnapshot.hasData == false ||
+              currentFormSnapshot.hasError)
+            return Center(child: CircularProgressIndicator());
+          else
+            currentForm = currentFormSnapshot.data;
+
+          double cardWidth = min(MediaQuery.of(context).size.width - 70, 480.0);
+          double cardHeight = MediaQuery.of(context).size.height <= 768.0
+              ? MediaQuery.of(context).size.height / 2
+              : cardWidth;
+          double padding = 18.0;
+
+          return Container(
+            height: cardHeight + padding * 2,
+            child: Stack(
+              children: currentForm.questions
+                  .map(
+                    (question) => QuestionCard(
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      question: question,
+                    ),
+                  )
+                  .cast<Widget>()
+                  .toList(),
+            ),
+          );
+        },
+      );
 }

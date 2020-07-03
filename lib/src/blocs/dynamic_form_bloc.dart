@@ -1,18 +1,20 @@
 import 'dart:async';
 
+import 'package:cons_calc_lib/src/dynamic_forms_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DynamicFormBloc {
-  final DynamicForm initialForm;
-  List<DynamicForm> _forms;
+  final String initialFormId;
+  final DynamicFormsRepository repository;
+
+  List<DynamicForm> get _forms => _formsController.value;
   Map<String, Map> _formResults;
   int _currentFormIndex;
-  final Function getDynamicFormWithId, getConsumptionProduct, uploadFormResults;
 
   // Streams
-  ValueObservable<Map> get currentFormResults =>
+  ValueObservable<Map<String, Map>> get currentFormResults =>
       _currentFormResultsController.stream;
   ValueObservable<ButtonStatus> get nextButtonStatus =>
       _nextButtonStatusController.stream;
@@ -25,7 +27,7 @@ class DynamicFormBloc {
   Stream<bool> get isKeyboardVisible => _isKeyboardVisibleController.stream;
 
   // Controllers
-  final _currentFormResultsController = BehaviorSubject<Map>();
+  final _currentFormResultsController = BehaviorSubject<Map<String, Map>>();
   final _nextButtonStatusController = BehaviorSubject<ButtonStatus>();
   final _currentQuestionController = BehaviorSubject<Question>();
   final _previousQuestionsController = BehaviorSubject<List<String>>.seeded([]);
@@ -34,7 +36,7 @@ class DynamicFormBloc {
   final _currentTitlePageController = PublishSubject<double>();
   final _titlesController = BehaviorSubject<List<String>>.seeded([]);
   final _formsController = BehaviorSubject<List<DynamicForm>>();
-  final _isKeyboardVisibleController = StreamController<bool>();
+  final _isKeyboardVisibleController = BehaviorSubject<bool>();
 
   // Getters
   bool get _isCurrentQuestionAnswered =>
@@ -52,25 +54,26 @@ class DynamicFormBloc {
   //
   // CONSTRUCTOR
   DynamicFormBloc({
-    @required this.initialForm,
-    @required this.getDynamicFormWithId,
-    @required this.getConsumptionProduct,
-    @required this.uploadFormResults,
+    @required this.initialFormId,
+    @required this.repository,
   }) {
-    _forms = [initialForm];
-    _formsController.add(_forms);
-    _currentFormController.add(initialForm);
-    _currentQuestionController.add(initialForm.questions.first);
-    _formResults = {};
-    _currentFormIndex = 0;
+    repository.getFormWithId(initialFormId).then((initialForm) {
+      repository.initialForm = initialForm;
+      _formsController.add([initialForm]);
+      _currentFormController.add(initialForm);
+      _currentQuestionController.add(initialForm.questions.first);
+      _formResults = {};
+      _currentFormIndex = 0;
+    });
   }
 
   // METHODS
   void setValue(Answer answer, dynamic value) {
-    Map results = currentFormResults.value ?? {};
+    Map<String, Map> results = currentFormResults.value ?? {};
 
     results[currentQuestion.value.id] = {
-      Answer.KEY: answer.key,
+      Question.LABEL: currentQuestion.value.label,
+      Answer.LABEL: answer.label,
       Answer.ID: answer.id,
       "value": value,
       Question.QUESTION_PURPOSE: currentQuestion.value.questionPurpose,
@@ -103,22 +106,33 @@ class DynamicFormBloc {
     _updateButtonStatus();
   }
 
-  Future<List> finishAndSaveForm() async {
-    List consumptionProducts;
+  /// Saves the form results from the current form. Then checks if there are
+  /// more forms to be shown.
+  ///
+  /// Returns true if there are more forms to show. False if not
+  Future<bool> finishAndSaveForm() async {
+    List<DynamicForm> forms = _forms;
+    bool newFormsAdded = false;
 
     _formResults[currentForm.value.id] = currentFormResults.value;
+    repository.uploadFormResults(currentFormResults.value);
 
     for (Map answerData in currentFormResults.value.values) {
       if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
-        if (answerData["value"] is String && answerData["value"] != null)
-          _forms.add(getDynamicFormWithId(answerData["value"]));
-        else if (answerData["value"] is List)
-          for (String formId in answerData["value"])
-            _forms.add(getDynamicFormWithId(formId));
-
-        _formsController.add(_forms);
+        if (answerData["value"] is String && answerData["value"] != null) {
+          DynamicForm form =
+              await repository.getFormWithId(answerData["value"]);
+          forms.add(form);
+        } else if (answerData["value"] is List) {
+          for (String formId in answerData["value"]) {
+            DynamicForm form = await repository.getFormWithId(formId);
+            forms.add(form);
+          }
+        }
+        newFormsAdded = true;
       }
     }
+    if (newFormsAdded) _formsController.add(forms);
 
     // There are more forms to show
     if (_forms.length > _currentFormIndex + 1) {
@@ -130,76 +144,13 @@ class DynamicFormBloc {
       _currentFormResultsController.add(null);
 
       _updateButtonStatus();
-    } // It's the last form
-    else {
-      double extraConsumption = 0.0;
-      consumptionProducts = [];
-
-      // For each form we recollect the answers for the consumption questions
-      for (Map questionsMap in _formResults.values) {
-        int units;
-        // We store the atributes to filter the consumption products
-        List filters = [];
-        questionsMap.forEach(
-          (questionId, answersMap) {
-            if (answersMap['question_purpose'] == QuestionPurpose.CONSUMPTION &&
-                answersMap['value'] != null &&
-                answersMap['key'] != null) {
-              var value = answersMap['value'];
-              // Transform number range into its mean
-              if (value is String &&
-                  value.contains('-') &&
-                  !value.contains(' - ')) {
-                int floor =
-                    int.tryParse(value.substring(0, value.indexOf('-')));
-                int ceil = int.tryParse(
-                    value.substring(value.indexOf('-') + 1, value.length));
-
-                if (floor != null && ceil != null)
-                  answersMap['value'] = ((floor + ceil) / 2).toStringAsFixed(0);
-              }
-              filters.add(answersMap);
-            } else if (answersMap['question_purpose'] ==
-                    QuestionPurpose.NUM_OF_UNITS &&
-                answersMap['value'] != null)
-              units = answersMap["value"];
-
-            // If the user selected a product we add it to the list
-            else if (answersMap['question_purpose'] ==
-                    QuestionPurpose.PRODUCT_SELECTION &&
-                answersMap['value'] != null)
-              consumptionProducts.add(answersMap['value']);
-          },
-        );
-
-        if (filters.isNotEmpty) {
-          ConsumptionProduct consumptionProduct =
-              await getConsumptionProduct(filters);
-          if (consumptionProduct != null) {
-            // If there are multiple units of the same product we add them as SubProducts
-            if (units != null) {
-              consumptionProduct.subProducts = [];
-              for (int i = 0; i < units - 1; i++) {
-                // -1 because we already have 1 unit added
-                consumptionProduct.subProducts.add(
-                  ConsumptionSubProduct(
-                    id: consumptionProduct.id,
-                    name: consumptionProduct.name,
-                    powerConsumption: consumptionProduct.powerConsumption,
-                  ),
-                );
-              }
-            }
-
-            consumptionProducts.add(consumptionProduct);
-          }
-        }
-      }
-      // Upload the results to Firestore
-      uploadFormResults(_formResults);
+      return true;
     }
 
-    return consumptionProducts;
+    // It's the last form
+    repository.updateFormResults(_formResults);
+
+    return false;
   }
 
   void _updateButtonStatus() {
@@ -219,12 +170,14 @@ class DynamicFormBloc {
       _isKeyboardVisibleController.add(isVisible);
 
   void goToPreviousQuestion() {
-    // TODO REMOVE THE ANSWER FROM THE CURRENT QUESTION
+    currentFormResults.value.remove(currentQuestion.value.id);
+
     _currentQuestionController.add(currentForm.value.questions.singleWhere(
         (q) => q.id == _previousQuestionsController.value.last,
         orElse: () => null));
     _previousQuestionsController
         .add(_previousQuestionsController.value..removeLast());
+    _currentFormResultsController.add(currentFormResults.value);
 
     _updateButtonStatus();
   }

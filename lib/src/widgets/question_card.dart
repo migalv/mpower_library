@@ -63,7 +63,7 @@ class _QuestionCardState extends State<QuestionCard> {
           double centerFromLeft =
               MediaQuery.of(context).size.width / 2 - (widget.cardWidth / 2);
 
-          print("Builder question ${widget.question.id}");
+          // print("Builder question ${widget.question.id}");
 
           if (isCurrentQuestion) {
             left = centerFromLeft;

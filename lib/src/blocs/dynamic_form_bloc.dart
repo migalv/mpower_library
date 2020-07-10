@@ -14,6 +14,7 @@ class DynamicFormBloc {
   int _currentFormIndex;
 
   // Streams
+  Stream<String> get initialFormTitle => _initialFormTitleController.stream;
   ValueObservable<Map<String, Map>> get currentFormResults =>
       _currentFormResultsController.stream;
   ValueObservable<ButtonStatus> get nextButtonStatus =>
@@ -27,6 +28,7 @@ class DynamicFormBloc {
   Stream<bool> get isKeyboardVisible => _isKeyboardVisibleController.stream;
 
   // Controllers
+  final _initialFormTitleController = StreamController<String>();
   final _currentFormResultsController = BehaviorSubject<Map<String, Map>>();
   final _nextButtonStatusController = BehaviorSubject<ButtonStatus>();
   final _currentQuestionController = BehaviorSubject<Question>();
@@ -59,6 +61,7 @@ class DynamicFormBloc {
   }) {
     repository.getFormWithId(initialFormId).then((initialForm) {
       repository.initialForm = initialForm;
+      _initialFormTitleController.add(initialForm.title);
       _formsController.add([initialForm]);
       _currentFormController.add(initialForm);
       _currentQuestionController.add(initialForm.questions.first);

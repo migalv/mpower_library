@@ -8,8 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 class DynamicFormPage extends StatefulWidget {
-  DynamicFormPage();
-
   @override
   _DynamicFormPageState createState() => _DynamicFormPageState();
 }
@@ -33,7 +31,8 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
       body: Column(
         children: [
           _buildMpowerLogo(),
-          _buildTitlesScroll(),
+          _buildFormTitle(),
+          // _buildTitlesScroll(),
           _buildQuestionCarousel(),
         ],
       ),
@@ -48,6 +47,25 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
               ? MediaQuery.of(context).size.height / 10
               : MediaQuery.of(context).size.height / 8,
           color: Color.fromRGBO(0, 54, 103, 1),
+        ),
+      );
+
+  Widget _buildFormTitle() => Expanded(
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 480.0,
+          ),
+          child: StreamBuilder<String>(
+            stream: _dynamicFormBloc.initialFormTitle,
+            builder: (context, snapshot) =>
+                snapshot.hasData && snapshot.hasError == false
+                    ? Text(
+                        snapshot.data,
+                        style: Theme.of(context).textTheme.headline1,
+                        textAlign: TextAlign.center,
+                      )
+                    : Container(),
+          ),
         ),
       );
 

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:cons_calc_lib/src/widgets/title_form.dart';
 import 'package:cons_calc_lib/src/widgets/question_card.dart';
@@ -32,7 +33,8 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         children: [
           _buildMpowerLogo(),
           _buildFormTitle(),
-          // _buildTitlesScroll(),
+          Expanded(child: Container()),
+          _buildGreetingText(),
           _buildQuestionCarousel(),
         ],
       ),
@@ -50,23 +52,106 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         ),
       );
 
-  Widget _buildFormTitle() => Expanded(
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: 480.0,
-          ),
-          child: StreamBuilder<String>(
-            stream: _dynamicFormBloc.initialFormTitle,
-            builder: (context, snapshot) =>
-                snapshot.hasData && snapshot.hasError == false
-                    ? Text(
-                        snapshot.data,
-                        style: Theme.of(context).textTheme.headline1,
-                        textAlign: TextAlign.center,
-                      )
-                    : Container(),
-          ),
+  Widget _buildFormTitle() => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 32.0),
+        constraints: BoxConstraints(
+          maxWidth: 480.0,
         ),
+        child: StreamBuilder<String>(
+          stream: _dynamicFormBloc.initialFormTitle,
+          builder: (context, snapshot) => snapshot.hasData &&
+                  snapshot.hasError == false
+              ? StreamBuilder<bool>(
+                  stream: _dynamicFormBloc.isKeyboardVisible,
+                  initialData: false,
+                  builder: (_, keyboardVisibilitySnapshot) =>
+                      keyboardVisibilitySnapshot.data == false
+                          ? FittedBox(
+                              alignment: Alignment.topCenter,
+                              child: AutoSizeText(
+                                snapshot.data,
+                                style: Theme.of(context).textTheme.headline1,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                              ),
+                            )
+                          : Container(),
+                )
+              : Container(),
+        ),
+      );
+
+  Widget _buildGreetingText() => StreamBuilder<Map<String, String>>(
+        stream: _dynamicFormBloc.greetingData,
+        builder: (_, greetingDataSnapshot) {
+          if (greetingDataSnapshot.hasData == false ||
+              greetingDataSnapshot.hasError)
+            return Container();
+          else if (greetingDataSnapshot.data["title"] == null ||
+              greetingDataSnapshot.data["subtitle"] == null) return Container();
+
+          return StreamBuilder<bool>(
+            stream: _dynamicFormBloc.isFirstQuestion,
+            initialData: true,
+            builder: (_, isFirstQuestionSnapshot) => StreamBuilder<bool>(
+              stream: _dynamicFormBloc.isKeyboardVisible,
+              initialData: false,
+              builder: (_, keyboardVisibilitySnapshot) {
+                if (keyboardVisibilitySnapshot.data == true) return Container();
+                return AnimatedOpacity(
+                  opacity: isFirstQuestionSnapshot.data == true ? 1.0 : 0.0,
+                  duration: Duration(milliseconds: 400),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    constraints: BoxConstraints(
+                      maxWidth: 480.0,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              greetingDataSnapshot.data["title"] != null
+                                  ? AutoSizeText(
+                                      greetingDataSnapshot.data["title"],
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1
+                                          .copyWith(
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 22.0,
+                                          ),
+                                      maxLines: 1,
+                                    )
+                                  : Container(),
+                              SizedBox(height: 8.0),
+                              greetingDataSnapshot.data["subtitle"] != null
+                                  ? AutoSizeText(
+                                      greetingDataSnapshot.data["subtitle"],
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText2
+                                          .copyWith(
+                                            color: black70,
+                                            fontStyle: FontStyle.italic,
+                                            fontSize: 16.0,
+                                          ),
+                                      textAlign: TextAlign.justify,
+                                    )
+                                  : Container(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       );
 
   Widget _buildTitlesScroll() => StreamBuilder<List<DynamicForm>>(

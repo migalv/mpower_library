@@ -12,6 +12,7 @@ class DynamicFormBloc {
   List<DynamicForm> get _forms => _formsController.value;
   Map<String, Map> _formResults;
   int _currentFormIndex;
+  Question _firstQuestion;
 
   // Streams
   Stream<String> get initialFormTitle => _initialFormTitleController.stream;
@@ -26,6 +27,9 @@ class DynamicFormBloc {
   ValueObservable<DynamicForm> get currentForm => _currentFormController.stream;
   Stream<List<DynamicForm>> get forms => _formsController.stream;
   Stream<bool> get isKeyboardVisible => _isKeyboardVisibleController.stream;
+  Stream<bool> get isFirstQuestion => _isFirstQuestionController.stream;
+  Stream<Map<String, String>> get greetingData =>
+      _greetingDataController.stream;
 
   // Controllers
   final _initialFormTitleController = StreamController<String>();
@@ -39,6 +43,8 @@ class DynamicFormBloc {
   final _titlesController = BehaviorSubject<List<String>>.seeded([]);
   final _formsController = BehaviorSubject<List<DynamicForm>>();
   final _isKeyboardVisibleController = BehaviorSubject<bool>();
+  final _isFirstQuestionController = StreamController<bool>();
+  final _greetingDataController = StreamController<Map<String, String>>();
 
   // Getters
   bool get _isCurrentQuestionAnswered =>
@@ -64,7 +70,15 @@ class DynamicFormBloc {
       _initialFormTitleController.add(initialForm.title);
       _formsController.add([initialForm]);
       _currentFormController.add(initialForm);
+      _firstQuestion = initialForm.questions.first;
+      _greetingDataController.add({
+        "title": initialForm.greetingTitle,
+        "subtitle": initialForm.greetingSubtitle,
+      });
+      currentQuestion.listen((currentQuestion) =>
+          _isFirstQuestionController.add(_firstQuestion == currentQuestion));
       _currentQuestionController.add(initialForm.questions.first);
+
       _formResults = {};
       _currentFormIndex = 0;
     });
@@ -199,5 +213,8 @@ class DynamicFormBloc {
     _titlesController.close();
     _formsController.close();
     _isKeyboardVisibleController.close();
+    _initialFormTitleController.close();
+    _isFirstQuestionController.close();
+    _greetingDataController.close();
   }
 }

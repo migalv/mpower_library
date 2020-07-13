@@ -202,8 +202,7 @@ class _QuestionCardState extends State<QuestionCard> {
               questionResults = currentFormResultsSnapshot.data[questionId];
             return Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 children: answers
                         .any((answer) => answer.type == AnswerType.IMAGE_OPTION)
                     ? _buildAnswerWithImages(
@@ -220,6 +219,7 @@ class _QuestionCardState extends State<QuestionCard> {
   Widget _buildAnswer(String questionId, Answer answer, Map questionResults) {
     Widget answerWidget;
     bool answerIsSelected = isAnswerSelected(answer, questionResults);
+    double hPadding = 24.0;
 
     switch (answer.type) {
       case AnswerType.SELECT:
@@ -234,6 +234,7 @@ class _QuestionCardState extends State<QuestionCard> {
       case AnswerType.PRODUCT_LIST:
         answerWidget =
             _buildProductListAnswer(questionId, answer, questionResults);
+        hPadding = 0.0;
         break;
       case AnswerType.IMAGE_OPTION:
         answerWidget = _buildOptionAnswer(questionId, answer, answerIsSelected);
@@ -241,7 +242,7 @@ class _QuestionCardState extends State<QuestionCard> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: hPadding),
       child: answerWidget,
     );
   }
@@ -260,6 +261,7 @@ class _QuestionCardState extends State<QuestionCard> {
         autoPlay: true,
         aspectRatio: 2.0,
         enlargeCenterPage: true,
+        pauseAutoPlayOnTouch: true,
       ),
       items: answersWithImage
           .map((answer) {
@@ -274,7 +276,8 @@ class _QuestionCardState extends State<QuestionCard> {
         .map((answer) {
           bool isSelected = isAnswerSelected(answer, questionResults);
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24.0),
             child: _buildOptionAnswer(questionId, answer, isSelected),
           );
         })
@@ -294,7 +297,7 @@ class _QuestionCardState extends State<QuestionCard> {
                 child: Image.network(
                   answer.imageUrl,
                   frameBuilder: (_, child, frame, isLoaded) => isLoaded
-                      ? FittedBox(child: child)
+                      ? FittedBox(fit: BoxFit.cover, child: child)
                       : Stack(
                           children: [
                             Center(child: CircularProgressIndicator()),
@@ -508,6 +511,7 @@ class _QuestionCardState extends State<QuestionCard> {
         options: CarouselOptions(
           autoPlay: true,
           enlargeCenterPage: true,
+          pauseAutoPlayOnTouch: true,
         ),
         items: answer.value
             .map((product) {
@@ -533,30 +537,34 @@ class _QuestionCardState extends State<QuestionCard> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Expanded(
-                    flex: 3,
-                    child: Image.network(
-                      product.imageURL,
-                      frameBuilder: (_, child, frame, isLoaded) => isLoaded
-                          ? FittedBox(child: child)
-                          : Stack(
-                              children: [
-                                Center(child: CircularProgressIndicator()),
-                                Center(
-                                  child: AnimatedOpacity(
-                                    opacity: frame == null ? 0 : 1,
-                                    duration: Duration(seconds: 1),
-                                    child: child,
-                                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Image.network(
+                          product.imageURL,
+                          frameBuilder: (_, child, frame, isLoaded) => isLoaded
+                              ? FittedBox(child: child)
+                              : Stack(
+                                  children: [
+                                    Center(child: CircularProgressIndicator()),
+                                    Center(
+                                      child: AnimatedOpacity(
+                                        opacity: frame == null ? 0 : 1,
+                                        duration: Duration(seconds: 1),
+                                        child: child,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                      errorBuilder: (_, __, ___) => Icon(
-                        MdiIcons.tag,
-                        color: Colors.black26,
-                        size: 32.0,
+                          errorBuilder: (_, __, ___) => Icon(
+                            MdiIcons.tag,
+                            color: Colors.black26,
+                            size: 32.0,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                   Divider(
                     height: 1.0,

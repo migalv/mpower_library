@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
-import 'package:cons_calc_lib/src/widgets/title_form.dart';
 import 'package:cons_calc_lib/src/widgets/question_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -154,60 +153,6 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         },
       );
 
-  Widget _buildTitlesScroll() => StreamBuilder<List<DynamicForm>>(
-        stream: _dynamicFormBloc.forms,
-        initialData: [],
-        builder: (_, snapshotForms) => StreamBuilder<DynamicForm>(
-          stream: _dynamicFormBloc.currentForm,
-          builder: (_, currentFormSnapshot) {
-            DynamicForm currentForm;
-            List<DynamicForm> forms = snapshotForms.data;
-
-            if (currentFormSnapshot.hasData == false ||
-                currentFormSnapshot.hasError)
-              return Center(child: CircularProgressIndicator());
-            else
-              currentForm = currentFormSnapshot.data;
-
-            List<Widget> titles = [];
-            int currentFormIndex = forms.indexOf(currentForm);
-
-            for (int i = 0; i < forms.length; i++)
-              titles.add(TitleForm(
-                formIndex: i,
-                currentFormIndex: currentFormIndex,
-                title: forms[i].title,
-              ));
-
-            return StreamBuilder<bool>(
-              stream: _dynamicFormBloc.isKeyboardVisible,
-              initialData: false,
-              builder: (_, keyboardVisibilitySnapshot) =>
-                  keyboardVisibilitySnapshot.data == false
-                      ? Expanded(
-                          child: Container(
-                            constraints: BoxConstraints(maxWidth: 480.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: titles.length > 3
-                                  ? titles
-                                      .getRange(
-                                          currentFormIndex - 3 < 0
-                                              ? 0
-                                              : currentFormIndex - 2,
-                                          currentFormIndex + 1)
-                                      .toList()
-                                  : titles,
-                            ),
-                          ),
-                        )
-                      : Container(),
-            );
-          },
-        ),
-      );
-
   Widget _buildQuestionCarousel() => StreamBuilder<DynamicForm>(
         stream: _dynamicFormBloc.currentForm,
         builder: (_, currentFormSnapshot) {
@@ -243,3 +188,58 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         },
       );
 }
+
+// OLD TITLE BUILDER
+// Widget _buildTitlesScroll() => StreamBuilder<List<DynamicForm>>(
+//       stream: _dynamicFormBloc.forms,
+//       initialData: [],
+//       builder: (_, snapshotForms) => StreamBuilder<DynamicForm>(
+//         stream: _dynamicFormBloc.currentForm,
+//         builder: (_, currentFormSnapshot) {
+//           DynamicForm currentForm;
+//           List<DynamicForm> forms = snapshotForms.data;
+
+//           if (currentFormSnapshot.hasData == false ||
+//               currentFormSnapshot.hasError)
+//             return Center(child: CircularProgressIndicator());
+//           else
+//             currentForm = currentFormSnapshot.data;
+
+//           List<Widget> titles = [];
+//           int currentFormIndex = forms.indexOf(currentForm);
+
+//           for (int i = 0; i < forms.length; i++)
+//             titles.add(TitleForm(
+//               formIndex: i,
+//               currentFormIndex: currentFormIndex,
+//               title: forms[i].title,
+//             ));
+
+//           return StreamBuilder<bool>(
+//             stream: _dynamicFormBloc.isKeyboardVisible,
+//             initialData: false,
+//             builder: (_, keyboardVisibilitySnapshot) =>
+//                 keyboardVisibilitySnapshot.data == false
+//                     ? Expanded(
+//                         child: Container(
+//                           constraints: BoxConstraints(maxWidth: 480.0),
+//                           child: Column(
+//                             mainAxisAlignment: MainAxisAlignment.end,
+//                             crossAxisAlignment: CrossAxisAlignment.start,
+//                             children: titles.length > 3
+//                                 ? titles
+//                                     .getRange(
+//                                         currentFormIndex - 3 < 0
+//                                             ? 0
+//                                             : currentFormIndex - 2,
+//                                         currentFormIndex + 1)
+//                                     .toList()
+//                                 : titles,
+//                           ),
+//                         ),
+//                       )
+//                     : Container(),
+//           );
+//         },
+//       ),
+//     );

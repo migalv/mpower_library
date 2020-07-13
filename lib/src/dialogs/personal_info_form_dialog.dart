@@ -35,13 +35,13 @@ class PersonalInfoFormDialog extends StatelessWidget {
             child: ListView(
               children: [
                 _buildTextField(
-                  "Name",
+                  "Nom",
                   MdiIcons.account,
                   nameController,
                   isRequired: true,
                 ),
                 _buildTextField(
-                  "Phone number",
+                  "Numero de téléphone",
                   MdiIcons.phone,
                   phoneController,
                   keyboardType: TextInputType.phone,
@@ -64,7 +64,7 @@ class PersonalInfoFormDialog extends StatelessWidget {
         actions: [
           RaisedButton(
             onPressed: () => _validateForm(context),
-            child: Text("Continue", style: TextStyle(color: black70)),
+            child: Text("Continuer", style: TextStyle(color: black70)),
           ),
         ],
       ),
@@ -91,7 +91,7 @@ class PersonalInfoFormDialog extends StatelessWidget {
                     if (val == null ||
                         val == "" ||
                         (minLength != null && val.length < minLength))
-                      return "Enter a valid $label";
+                      return "Entrer un $label valide";
                     return null;
                   }
                 : null,

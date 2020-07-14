@@ -32,7 +32,6 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         children: [
           _buildMpowerLogo(),
           _buildFormTitle(),
-          Expanded(child: Container()),
           _buildGreetingText(),
           _buildQuestionCarousel(),
         ],
@@ -58,116 +57,126 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         ),
         child: StreamBuilder<String>(
           stream: _dynamicFormBloc.initialFormTitle,
-          builder: (context, snapshot) => snapshot.hasData &&
-                  snapshot.hasError == false
-              ? StreamBuilder<bool>(
-                  stream: _dynamicFormBloc.isKeyboardVisible,
-                  initialData: false,
-                  builder: (_, keyboardVisibilitySnapshot) =>
-                      keyboardVisibilitySnapshot.data == false
-                          ? FittedBox(
-                              alignment: Alignment.topCenter,
-                              child: AutoSizeText(
-                                snapshot.data,
-                                style: Theme.of(context).textTheme.headline1,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                              ),
-                            )
-                          : Container(),
-                )
-              : Container(),
+          builder: (context, snapshot) =>
+              snapshot.hasData && snapshot.hasError == false
+                  ? StreamBuilder<bool>(
+                      stream: _dynamicFormBloc.isKeyboardVisible,
+                      initialData: false,
+                      builder: (_, keyboardVisibilitySnapshot) =>
+                          keyboardVisibilitySnapshot.data == false
+                              ? FittedBox(
+                                  alignment: Alignment.topCenter,
+                                  child: AutoSizeText(
+                                    snapshot.data,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline1
+                                        .copyWith(
+                                            fontSize: MediaQuery.of(context)
+                                                        .size
+                                                        .height <=
+                                                    700
+                                                ? 22
+                                                : null),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                  ),
+                                )
+                              : Container(),
+                    )
+                  : Container(),
         ),
       );
 
-  Widget _buildGreetingText() => StreamBuilder<Map<String, String>>(
-        stream: _dynamicFormBloc.greetingData,
-        builder: (_, greetingDataSnapshot) {
-          if (greetingDataSnapshot.hasData == false ||
-              greetingDataSnapshot.hasError)
-            return Container();
-          else if (greetingDataSnapshot.data["title"] == null ||
-              greetingDataSnapshot.data["subtitle"] == null) return Container();
+  Widget _buildGreetingText() => Expanded(
+        child: StreamBuilder<Map<String, String>>(
+          stream: _dynamicFormBloc.greetingData,
+          builder: (_, greetingDataSnapshot) {
+            if (greetingDataSnapshot.hasData == false ||
+                greetingDataSnapshot.hasError)
+              return Container();
+            else if (greetingDataSnapshot.data["title"] == null ||
+                greetingDataSnapshot.data["subtitle"] == null)
+              return Container();
 
-          return StreamBuilder<bool>(
-            stream: _dynamicFormBloc.isFirstQuestion,
-            initialData: true,
-            builder: (_, isFirstQuestionSnapshot) => StreamBuilder<bool>(
-              stream: _dynamicFormBloc.isKeyboardVisible,
-              initialData: false,
-              builder: (_, keyboardVisibilitySnapshot) {
-                if (keyboardVisibilitySnapshot.data == true) return Container();
-                return AnimatedOpacity(
-                  opacity: isFirstQuestionSnapshot.data == true ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 400),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    constraints: BoxConstraints(
-                      maxWidth: 480.0,
+            return StreamBuilder<bool>(
+              stream: _dynamicFormBloc.isFirstQuestion,
+              initialData: true,
+              builder: (_, isFirstQuestionSnapshot) => StreamBuilder<bool>(
+                stream: _dynamicFormBloc.isKeyboardVisible,
+                initialData: false,
+                builder: (_, keyboardVisibilitySnapshot) {
+                  if (keyboardVisibilitySnapshot.data == true)
+                    return Container();
+                  return AnimatedOpacity(
+                    opacity: isFirstQuestionSnapshot.data == true ? 1.0 : 0.0,
+                    duration: Duration(milliseconds: 400),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      constraints: BoxConstraints(
+                        maxWidth: 480.0,
+                        maxHeight: MediaQuery.of(context).size.height * 0.25,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          greetingDataSnapshot.data["title"] != null
+                              ? AutoSizeText(
+                                  greetingDataSnapshot.data["title"],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .copyWith(
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22.0,
+                                      ),
+                                  maxLines: 1,
+                                )
+                              : Container(),
+                          SizedBox(height: 8.0),
+                          greetingDataSnapshot.data["subtitle"] != null
+                              ? AutoSizeText(
+                                  greetingDataSnapshot.data["subtitle"],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyText2
+                                      .copyWith(
+                                        color: black70,
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 16.0,
+                                      ),
+                                  textAlign: TextAlign.justify,
+                                  maxLines: 3,
+                                )
+                              : Container(),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              greetingDataSnapshot.data["title"] != null
-                                  ? AutoSizeText(
-                                      greetingDataSnapshot.data["title"],
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle1
-                                          .copyWith(
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 22.0,
-                                          ),
-                                      maxLines: 1,
-                                    )
-                                  : Container(),
-                              SizedBox(height: 8.0),
-                              greetingDataSnapshot.data["subtitle"] != null
-                                  ? AutoSizeText(
-                                      greetingDataSnapshot.data["subtitle"],
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText2
-                                          .copyWith(
-                                            color: black70,
-                                            fontStyle: FontStyle.italic,
-                                            fontSize: 16.0,
-                                          ),
-                                      textAlign: TextAlign.justify,
-                                    )
-                                  : Container(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+                  );
+                },
+              ),
+            );
+          },
+        ),
       );
 
   Widget _buildQuestionCarousel() => StreamBuilder<DynamicForm>(
         stream: _dynamicFormBloc.currentForm,
         builder: (_, currentFormSnapshot) {
           DynamicForm currentForm;
-
+          double screenHeight = MediaQuery.of(context).size.height;
+          double screenWidth = MediaQuery.of(context).size.width;
           if (currentFormSnapshot.hasData == false ||
               currentFormSnapshot.hasError)
             return Center(child: CircularProgressIndicator());
           else
             currentForm = currentFormSnapshot.data;
 
-          double cardWidth = min(MediaQuery.of(context).size.width - 70, 480.0);
-          double cardHeight = MediaQuery.of(context).size.height <= 768.0
-              ? MediaQuery.of(context).size.height / 2
-              : cardWidth;
+          double cardWidth = min(screenWidth - 70, 480.0);
+          double cardHeight =
+              screenHeight <= 700 ? screenHeight / 1.75 : screenHeight / 2;
           double padding = 18.0;
 
           return Container(

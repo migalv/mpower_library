@@ -289,77 +289,174 @@ class _QuestionCardState extends State<QuestionCard> {
 
   Widget _buildImageCard(String questionId, Answer answer, bool isSelected) =>
       Card(
-        child: Container(
-          width: MediaQuery.of(context).size.width / 2 + 32.0,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.network(
-                  answer.imageUrl,
-                  frameBuilder: (_, child, frame, isLoaded) => isLoaded
-                      ? FittedBox(fit: BoxFit.cover, child: child)
-                      : Stack(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: Stack(
+          children: [
+            InkWell(
+              onTap: () => _dynamicFormBloc.setValue(answer, answer.value),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    flex: 4,
+                    child: Image.network(
+                      answer.imageUrl,
+                      frameBuilder: (_, child, frame, isLoaded) => isLoaded
+                          ? FittedBox(child: child)
+                          : Stack(
+                              children: [
+                                Center(child: CircularProgressIndicator()),
+                                Center(
+                                  child: AnimatedOpacity(
+                                    opacity: frame == null ? 0 : 1,
+                                    duration: Duration(seconds: 1),
+                                    child: child,
+                                  ),
+                                ),
+                              ],
+                            ),
+                      errorBuilder: (_, __, ___) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Center(child: CircularProgressIndicator()),
-                            Center(
-                              child: AnimatedOpacity(
-                                opacity: frame == null ? 0 : 1,
-                                duration: Duration(seconds: 1),
-                                child: child,
-                              ),
+                            Icon(
+                              MdiIcons.fileAlert,
+                              color: Colors.black26,
+                              size: 32.0,
+                            ),
+                            SizedBox(height: 8.0),
+                            Text(
+                              "Unable to download image",
+                              style: Theme.of(context).textTheme.subtitle2,
                             ),
                           ],
+                        );
+                      },
+                    ),
+                  ),
+                  Divider(
+                    height: 1.0,
+                    color: Colors.black38,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                          MediaQuery.of(context).size.width < 480 ? 8.0 : 16.0),
+                      child: AutoSizeText(
+                        answer.label['en'] ?? "",
+                        // minFontSize: 12.0,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontFamily: 'LibreFranklin',
+                          fontWeight: FontWeight.w500,
+                          // fontSize: 19.94,
+                          letterSpacing: 0.25,
+                          color: Colors.black87,
                         ),
-                  errorBuilder: (_, __, ___) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          MdiIcons.fileAlert,
-                          color: Colors.black26,
-                          size: 32.0,
-                        ),
-                        SizedBox(height: 8.0),
-                        Text(
-                          "Unable to download image",
-                          style: Theme.of(context).textTheme.subtitle2,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              isSelected
-                  ? Container(
-                      decoration: BoxDecoration(
-                        color: secondaryMain.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: Align(
-                        alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            Icons.check_circle_outline,
-                            size: 32.0,
-                            color: secondaryMain,
-                          ),
-                        ),
-                      ),
-                    )
-                  : Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        splashColor: Color(0x40FFC107),
-                        highlightColor: Color(0x20FFC107),
-                        onTap: () =>
-                            _dynamicFormBloc.setValue(answer, answer.value),
                       ),
                     ),
-            ],
-          ),
+                  ),
+                ],
+              ),
+            ),
+            isSelected
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: secondaryMain.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.check_circle_outline,
+                          size: 32.0,
+                          color: secondaryMain,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(),
+          ],
         ),
       );
+  // Card(
+  //   child: Container(
+  //     width: MediaQuery.of(context).size.width / 2 + 32.0,
+  //     child: Stack(
+  //       children: [
+  //         Positioned.fill(
+  //           child: Image.network(
+  //             answer.imageUrl,
+  //             frameBuilder: (_, child, frame, isLoaded) => isLoaded
+  //                 ? FittedBox(fit: BoxFit.cover, child: child)
+  //                 : Stack(
+  //                     children: [
+  //                       Center(child: CircularProgressIndicator()),
+  //                       Center(
+  //                         child: AnimatedOpacity(
+  //                           opacity: frame == null ? 0 : 1,
+  //                           duration: Duration(seconds: 1),
+  //                           child: child,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //             errorBuilder: (_, __, ___) {
+  //               return Column(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   Icon(
+  //                     MdiIcons.fileAlert,
+  //                     color: Colors.black26,
+  //                     size: 32.0,
+  //                   ),
+  //                   SizedBox(height: 8.0),
+  //                   Text(
+  //                     "Unable to download image",
+  //                     style: Theme.of(context).textTheme.subtitle2,
+  //                   ),
+  //                 ],
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         isSelected
+  //             ? Container(
+  //                 decoration: BoxDecoration(
+  //                   color: secondaryMain.withOpacity(0.3),
+  //                   borderRadius: BorderRadius.circular(4.0),
+  //                 ),
+  //                 child: Align(
+  //                   alignment: Alignment.bottomRight,
+  //                   child: Padding(
+  //                     padding: const EdgeInsets.all(8.0),
+  //                     child: Icon(
+  //                       Icons.check_circle_outline,
+  //                       size: 32.0,
+  //                       color: secondaryMain,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               )
+  //             : Material(
+  //                 color: Colors.transparent,
+  //                 child: InkWell(
+  //                   splashColor: Color(0x40FFC107),
+  //                   highlightColor: Color(0x20FFC107),
+  //                   onTap: () =>
+  //                       _dynamicFormBloc.setValue(answer, answer.value),
+  //                 ),
+  //               ),
+  //       ],
+  //     ),
+  //   ),
+  // );
 
   Widget _buildSelectAnswer(
           String questionId, Answer answer, bool isSelected) =>
@@ -599,7 +696,7 @@ class _QuestionCardState extends State<QuestionCard> {
                       borderRadius: BorderRadius.circular(4.0),
                     ),
                     child: Align(
-                      alignment: Alignment.topRight,
+                      alignment: Alignment.topLeft,
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Icon(

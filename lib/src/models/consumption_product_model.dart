@@ -9,6 +9,7 @@ class ConsumptionProduct {
   final IconData icon;
   bool expanded;
   int get units => subProducts?.length ?? 1;
+  final int defaultUsage;
 
   ConsumptionProduct({
     this.day = 0,
@@ -20,6 +21,7 @@ class ConsumptionProduct {
     this.powerConsumption,
     this.imageUrl,
     this.icon,
+    this.defaultUsage = 1,
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +29,7 @@ class ConsumptionProduct {
         "name": name,
         "power_consumption": powerConsumption,
         "units": units,
+        "default_usage": defaultUsage,
       };
 }
 

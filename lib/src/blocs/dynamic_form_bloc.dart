@@ -92,6 +92,7 @@ class DynamicFormBloc {
       Question.LABEL: currentQuestion.value.label,
       Answer.LABEL: answer.label,
       Answer.ID: answer.id,
+      Answer.KEY: answer.key,
       "value": value,
       Question.QUESTION_PURPOSE: currentQuestion.value.questionPurpose,
     };

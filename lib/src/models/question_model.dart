@@ -53,4 +53,5 @@ enum QuestionPurpose {
   NUM_OF_UNITS,
   ADD_FORM,
   PRODUCT_SELECTION,
+  EXTRA_CONSUMPTION,
 }

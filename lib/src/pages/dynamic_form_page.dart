@@ -64,27 +64,21 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
                       initialData: false,
                       builder: (_, keyboardVisibilitySnapshot) =>
                           keyboardVisibilitySnapshot.data == false
-                              ? FittedBox(
-                                  alignment: Alignment.topCenter,
-                                  child: AutoSizeText(
-                                    snapshot.data,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headline1
-                                        .copyWith(
-                                            fontSize: MediaQuery.of(context)
-                                                        .size
-                                                        .height <=
-                                                    700
-                                                ? 22
-                                                : null),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                  ),
-                                )
-                              : Container(),
+                              ? _buildTitle(snapshot.data)
+                              : Center(child: CircularProgressIndicator()),
                     )
                   : Container(),
+        ),
+      );
+
+  Widget _buildTitle(String title) => FittedBox(
+        alignment: Alignment.topCenter,
+        child: AutoSizeText(
+          title,
+          style: Theme.of(context).textTheme.headline1.copyWith(
+              fontSize: MediaQuery.of(context).size.height <= 700 ? 22 : null),
+          textAlign: TextAlign.center,
+          maxLines: 1,
         ),
       );
 

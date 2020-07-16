@@ -65,7 +65,10 @@ class DynamicFormBloc {
     @required this.initialFormId,
     @required this.repository,
   }) {
-    repository.getFormWithId(initialFormId).then((initialForm) {
+    repository.getFormWithId(initialFormId).then((initialForm) async {
+      await repository.signInAnonymously();
+      repository.updateEmailList(
+          emails: initialForm.emailList, formId: initialFormId);
       repository.initialForm = initialForm;
       _initialFormTitleController.add(initialForm.title);
       _formsController.add([initialForm]);
@@ -87,8 +90,7 @@ class DynamicFormBloc {
   // METHODS
   void setValue(Answer answer, dynamic value) {
     Map<String, Map> results = currentFormResults.value ?? {};
-
-    results[currentQuestion.value.id] = {
+    Map answerResults = {
       Question.LABEL: currentQuestion.value.label,
       Answer.LABEL: answer.label,
       Answer.ID: answer.id,
@@ -96,7 +98,15 @@ class DynamicFormBloc {
       "value": value,
       Question.QUESTION_PURPOSE: currentQuestion.value.questionPurpose,
     };
+
+    results[currentQuestion.value.id] = answerResults;
     _currentFormResultsController.add(results);
+
+    repository.uploadAnswer(
+      currentForm.value.id,
+      currentQuestion.value.id,
+      answerResults,
+    );
 
     _updateButtonStatus();
   }
@@ -133,8 +143,8 @@ class DynamicFormBloc {
     bool newFormsAdded = false;
 
     _formResults[currentForm.value.id] = currentFormResults.value;
-    repository.uploadFormResults(currentFormResults.value);
 
+    // We add the next forms to the list
     for (Map answerData in currentFormResults.value.values) {
       if (answerData[Question.QUESTION_PURPOSE] == QuestionPurpose.ADD_FORM) {
         if (answerData["value"] is String && answerData["value"] != null) {
@@ -166,7 +176,7 @@ class DynamicFormBloc {
     }
 
     // It's the last form
-    repository.updateFormResults(_formResults);
+    repository.formFinished(_formResults);
 
     return false;
   }

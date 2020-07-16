@@ -21,6 +21,7 @@ dependencies:
   cached_network_image: 2.0.0-rc.1
   mask_text_input_formatter: ^1.0.7
   flutter_keyboard_visibility: ^3.2.1
+  firebase_auth: ^0.16.1
   
 dev_dependencies:
   flutter_test:

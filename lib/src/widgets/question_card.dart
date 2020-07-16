@@ -50,7 +50,8 @@ class _QuestionCardState extends State<QuestionCard> {
         stream: _dynamicFormBloc.currentQuestion,
         builder: (context, snapshot) {
           Question currentQuestion = snapshot.data;
-          if (currentQuestion == null) return Container();
+          if (currentQuestion == null)
+            return Center(child: CircularProgressIndicator());
           double bottom = padding;
           double left = padding;
 

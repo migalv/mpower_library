@@ -135,45 +135,53 @@ class _QuestionCardState extends State<QuestionCard> {
         ),
       );
 
-  Widget _backButton() => _dynamicFormBloc.isBackButtonVisible()
-      ? Align(
-          alignment: Alignment.bottomLeft,
-          child: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: Colors.black45,
-            ),
-            onPressed: () => _dynamicFormBloc.goToPreviousQuestion(),
-          ),
-        )
-      : Container();
+  Widget _backButton() => StreamBuilder<bool>(
+        stream: _dynamicFormBloc.isBackButtonVisible,
+        initialData: false,
+        builder: (context, snapshot) => snapshot.data
+            ? Align(
+                alignment: Alignment.bottomLeft,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back,
+                    color: Colors.black45,
+                  ),
+                  onPressed: () => _dynamicFormBloc.goToPreviousQuestion(),
+                ),
+              )
+            : Container(),
+      );
 
   Widget _nextButton(String questionId) => Align(
         alignment: Alignment.bottomCenter,
         child: StreamBuilder<ButtonStatus>(
           initialData: ButtonStatus.DISABLED,
           stream: _dynamicFormBloc.nextButtonStatus,
-          builder: (context, nextButtonStatusSnapshot) => FlatButton(
-            color: secondaryMain,
-            onPressed: nextButtonStatusSnapshot.data == ButtonStatus.DISABLED
-                ? null
-                : () {
-                    switch (nextButtonStatusSnapshot.data) {
-                      case ButtonStatus.NEXT:
-                        _nextQuestion(questionId);
-                        break;
-                      case ButtonStatus.FINISH:
-                        _finishForm();
-                        break;
-                      case ButtonStatus.RESTART:
-                        _restartForm();
-                        break;
-                      default:
-                        break;
-                    }
-                  },
-            child: Text('next'),
-          ),
+          builder: (context, nextButtonStatusSnapshot) =>
+              nextButtonStatusSnapshot.data == ButtonStatus.LOADING
+                  ? CircularProgressIndicator()
+                  : FlatButton(
+                      color: secondaryMain,
+                      onPressed:
+                          nextButtonStatusSnapshot.data == ButtonStatus.DISABLED
+                              ? null
+                              : () {
+                                  switch (nextButtonStatusSnapshot.data) {
+                                    case ButtonStatus.NEXT:
+                                      _nextQuestion(questionId);
+                                      break;
+                                    case ButtonStatus.FINISH:
+                                      _finishForm();
+                                      break;
+                                    case ButtonStatus.RESTART:
+                                      _restartForm();
+                                      break;
+                                    default:
+                                      break;
+                                  }
+                                },
+                      child: Text('next'),
+                    ),
         ),
       );
 
@@ -759,4 +767,5 @@ enum ButtonStatus {
   NEXT,
   FINISH,
   RESTART,
+  LOADING,
 }

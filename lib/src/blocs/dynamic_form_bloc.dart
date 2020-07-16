@@ -35,6 +35,8 @@ class DynamicFormBloc {
   Stream<Map<String, String>> get greetingData =>
       _greetingDataController.stream;
 
+  Stream<bool> get isBackButtonVisible => _isBackButtonVisibleController.stream;
+
   // Controllers
   final _initialFormTitleController = StreamController<String>();
   final _currentFormResultsController = BehaviorSubject<Map<String, Map>>();
@@ -49,6 +51,7 @@ class DynamicFormBloc {
   final _isKeyboardVisibleController = BehaviorSubject<bool>();
   final _isFirstQuestionController = StreamController<bool>();
   final _greetingDataController = StreamController<Map<String, String>>();
+  final _isBackButtonVisibleController = BehaviorSubject<bool>();
 
   // Getters
   bool get _isCurrentQuestionAnswered =>
@@ -151,6 +154,9 @@ class DynamicFormBloc {
     List<DynamicForm> forms = _forms;
     bool newFormsAdded = false;
 
+    _nextButtonStatusController.add(ButtonStatus.LOADING);
+    _isBackButtonVisibleController.add(false);
+
     if (_formResults[currentForm.value.id] == null)
       _formResults[currentForm.value.id] = List();
     _formResults[currentForm.value.id].add(currentFormResults.value);
@@ -195,6 +201,8 @@ class DynamicFormBloc {
   }
 
   void _updateButtonStatus() {
+    _isBackButtonVisibleController
+        .add(_previousQuestionsController.value?.isNotEmpty ?? false);
     if (_isCurrentQuestionAnswered) {
       if (_currentAnswer.restartForm)
         _nextButtonStatusController.add(ButtonStatus.RESTART);
@@ -223,9 +231,6 @@ class DynamicFormBloc {
     _updateButtonStatus();
   }
 
-  bool isBackButtonVisible() =>
-      _previousQuestionsController.value?.isNotEmpty ?? false;
-
   void dispose() {
     _currentFormResultsController.close();
     _nextButtonStatusController.close();
@@ -240,5 +245,6 @@ class DynamicFormBloc {
     _initialFormTitleController.close();
     _isFirstQuestionController.close();
     _greetingDataController.close();
+    _isBackButtonVisibleController.close();
   }
 }

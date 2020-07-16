@@ -10,9 +10,13 @@ class DynamicFormBloc {
   final DynamicFormsRepository repository;
 
   List<DynamicForm> get _forms => _formsController.value;
-  Map<String, Map> _formResults;
+  Map<String, List<Map>> _formResults;
   int _currentFormIndex;
   Question _firstQuestion;
+
+  /// Indicates if the form is being repeated. If so, it tells you on which
+  /// repetition we are
+  int repetitionIndex;
 
   // Streams
   Stream<String> get initialFormTitle => _initialFormTitleController.stream;
@@ -70,6 +74,7 @@ class DynamicFormBloc {
       repository.updateEmailList(
           emails: initialForm.emailList, formId: initialFormId);
       repository.initialForm = initialForm;
+      repetitionIndex = 0;
       _initialFormTitleController.add(initialForm.title);
       _formsController.add([initialForm]);
       _currentFormController.add(initialForm);
@@ -106,6 +111,7 @@ class DynamicFormBloc {
       currentForm.value.id,
       currentQuestion.value.id,
       answerResults,
+      repetitionIndex,
     );
 
     _updateButtonStatus();
@@ -125,11 +131,14 @@ class DynamicFormBloc {
   }
 
   void saveAndRestartForm() {
-    _formResults[currentForm.value.id] = currentFormResults.value;
+    if (_formResults[currentForm.value.id] == null)
+      _formResults[currentForm.value.id] = List();
+    _formResults[currentForm.value.id].add(currentFormResults.value);
     _previousQuestionsController.add([]);
     _currentQuestionController.add(currentForm.value.questions
         .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
     _currentFormResultsController.add(null);
+    repetitionIndex++;
 
     _updateButtonStatus();
   }
@@ -142,7 +151,11 @@ class DynamicFormBloc {
     List<DynamicForm> forms = _forms;
     bool newFormsAdded = false;
 
-    _formResults[currentForm.value.id] = currentFormResults.value;
+    if (_formResults[currentForm.value.id] == null)
+      _formResults[currentForm.value.id] = List();
+    _formResults[currentForm.value.id].add(currentFormResults.value);
+
+    repetitionIndex = 0;
 
     // We add the next forms to the list
     for (Map answerData in currentFormResults.value.values) {

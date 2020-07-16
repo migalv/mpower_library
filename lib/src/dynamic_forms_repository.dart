@@ -11,9 +11,10 @@ abstract class DynamicFormsRepository {
   DynamicForm initialForm;
   FirebaseUser currentUser;
 
-  Stream<Map<String, Map>> get formResultsStream =>
+  Stream<Map<String, List<Map>>> get formResultsStream =>
       _formResultsStreamController.stream;
-  final _formResultsStreamController = BehaviorSubject<Map<String, Map>>();
+  final _formResultsStreamController =
+      BehaviorSubject<Map<String, List<Map>>>();
 
   /// Fetches asynchronously a form from Firestore that matches the given [formId]
   ///
@@ -21,9 +22,11 @@ abstract class DynamicFormsRepository {
   /// if there was an error fetching the form the function will return null
   Future<DynamicForm> getFormWithId(String formId);
 
-  /// Uploads the answer of a question for the form with id [formId] that a user
-  /// with id [userId] answered
-  void uploadAnswer(String formId, String questionId, Map answerResults) {
+  /// Uploads the answer of a question [answerResults] for the form with id
+  /// [formId] that a user with id [userId] answered. The [repetitionIndex] is
+  /// used to know to which index insert the answer
+  void uploadAnswer(String formId, String questionId, Map answerResults,
+      int repetitionIndex) {
     Map answerResultsCopy = Map.from(answerResults);
 
     if (answerResultsCopy["question_purpose"] ==
@@ -39,7 +42,9 @@ abstract class DynamicFormsRepository {
         .document(currentUser.uid)
         .setData({
       "$formId": {
-        "$questionId": answerResultsCopy,
+        "$repetitionIndex": {
+          "$questionId": answerResultsCopy,
+        },
       },
       "last_updated_at": DateTime.now().millisecondsSinceEpoch,
     }, merge: true);
@@ -66,7 +71,7 @@ abstract class DynamicFormsRepository {
   }
 
   /// Updates the value of the form results
-  void formFinished(Map<String, Map> formResults) {
+  void formFinished(Map<String, List<Map>> formResults) {
     _formResultsStreamController.add(formResults);
     // TODO CALL CLOUD FUNCTION TO NOTIFY THAT THE FORM WAS FINISHED
   }

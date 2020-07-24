@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:cons_calc_lib/src/widgets/custom_expansion_tile.dart';
@@ -10,14 +12,12 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class QuestionCard extends StatefulWidget {
-  final Question question;
-  final double cardWidth, cardHeight;
+  final int index;
+  final Duration animationDuration;
 
-  QuestionCard({
-    @required this.question,
-    @required this.cardWidth,
-    @required this.cardHeight,
-  });
+  QuestionCard(
+      {Key key, @required this.index, @required this.animationDuration})
+      : super(key: key);
 
   @override
   _QuestionCardState createState() => _QuestionCardState();
@@ -26,6 +26,9 @@ class QuestionCard extends StatefulWidget {
 class _QuestionCardState extends State<QuestionCard> {
   final verticalInset = 18.0;
   final padding = 18.0;
+  double _screenHeight;
+  double _screenWidth;
+
   Map<String, TextEditingController> textFieldControllers = {};
   DynamicFormBloc _dynamicFormBloc;
   Map<String, GlobalKey<FormState>> _formKeys = {};
@@ -46,77 +49,86 @@ class _QuestionCardState extends State<QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<Question>(
-        stream: _dynamicFormBloc.currentQuestion,
+    _screenHeight = MediaQuery.of(context).size.height;
+    _screenWidth = MediaQuery.of(context).size.width;
+
+    double cardWidth = min(_screenWidth - 70, 480.0);
+    double cardHeight =
+        _screenHeight <= 700 ? _screenHeight / 1.75 : _screenHeight / 2;
+
+    return StreamBuilder<QuestionState>(
+        stream: _dynamicFormBloc.questionState,
         builder: (context, snapshot) {
-          Question currentQuestion = snapshot.data;
-          if (currentQuestion == null)
+          QuestionState questionState = snapshot.data;
+          if (questionState == null)
             return Center(child: CircularProgressIndicator());
+
+          Question question = questionState.questions[widget.index];
+
           double bottom = padding;
           double left = padding;
 
-          bool isCurrentQuestion =
-              widget.question.index == currentQuestion.index;
-          bool isNextQuestion = widget.question.index > currentQuestion.index;
-          int questionDifference =
-              currentQuestion.index - widget.question.index;
+          bool isCurrentQuestion = widget.index == questionState.currentIndex;
+          bool isNextQuestion =
+              question == null || widget.index == questionState.getNextIndex;
+          int questionDifference = questionState.indexDifference(widget.index);
           double opacity = 1.0;
-          double centerFromLeft =
-              MediaQuery.of(context).size.width / 2 - (widget.cardWidth / 2);
-
-          // print("Builder question ${widget.question.id}");
+          double centerFromLeft = _screenWidth / 2 - (cardWidth / 2);
 
           if (isCurrentQuestion) {
             left = centerFromLeft;
           } else if (isNextQuestion) {
-            left = MediaQuery.of(context).size.width - verticalInset;
-          } else if (questionDifference == 1) {
+            left = _screenWidth - verticalInset;
+          } // Right under the current question
+          else if (questionDifference == 1) {
             bottom -= verticalInset * questionDifference;
             left = centerFromLeft - padding;
+            opacity = 1;
+          } // 2 cards under the current question
+          else if (questionDifference == 2) {
+            left = centerFromLeft - padding;
+            bottom -= verticalInset * questionDifference;
             opacity = 0.7;
-          } else if (questionDifference == 2) {
+          } // 3 cards under the current question but invisible
+          else if (questionDifference == 3) {
             left = centerFromLeft - padding;
             bottom -= verticalInset * questionDifference;
-            opacity = 0.5;
-          } else if (questionDifference == 3) {
-            left = centerFromLeft - padding;
-            bottom -= verticalInset * questionDifference;
-            opacity = 0.3;
-          } else if (questionDifference > 3) {
-            left = centerFromLeft - padding;
-            bottom -= verticalInset * 3;
+            opacity = 0.0;
+          } // At the next question location already but invisible
+          else if (questionDifference > 3) {
+            left = _screenWidth - verticalInset;
             opacity = 0.0;
           }
           return AnimatedPositioned(
             left: left,
             bottom: bottom,
-            duration: Duration(milliseconds: 400),
+            duration: widget.animationDuration,
             child: AnimatedOpacity(
               opacity: opacity,
-              duration: Duration(milliseconds: 400),
+              duration: widget.animationDuration,
               child: Material(
                 borderRadius: BorderRadius.circular(8.0),
                 color: Colors.white,
-                elevation: isCurrentQuestion ||
-                        widget.question.index == currentQuestion.index + 1
-                    ? MAX_ELEVATION
-                    : 0.0,
+                elevation:
+                    isCurrentQuestion || isNextQuestion ? MAX_ELEVATION : 0.0,
                 child: StreamBuilder<Object>(
                     stream: _dynamicFormBloc.isKeyboardVisible,
                     initialData: false,
                     builder: (context, keyboardVisibilitySnapshot) {
                       return Container(
-                        width: widget.cardWidth,
-                        height: widget.cardHeight -
+                        width: cardWidth,
+                        height: cardHeight -
                             (keyboardVisibilitySnapshot.data ? 160.0 : 0.0),
-                        child: Column(
-                          children: [
-                            _buildQuestion(),
-                            isCurrentQuestion
-                                ? _buildButtonsRow(currentQuestion.id)
-                                : Container(),
-                          ],
-                        ),
+                        child: question == null
+                            ? Container()
+                            : Column(
+                                children: [
+                                  _buildQuestion(question),
+                                  isCurrentQuestion
+                                      ? _buildButtonsRow(question.id)
+                                      : Container(),
+                                ],
+                              ),
                       );
                     }),
               ),
@@ -185,19 +197,19 @@ class _QuestionCardState extends State<QuestionCard> {
         ),
       );
 
-  Widget _buildQuestion() => Expanded(
-        child: widget.question == null
+  Widget _buildQuestion(Question question) => Expanded(
+        child: question == null
             ? Container()
             : Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 8.0),
                     child: Text(
-                      widget.question.label['en'],
+                      question.label['en'],
                       style: Theme.of(context).textTheme.subtitle1,
                     ),
                   ),
-                  _buildAnswers(widget.question.id, widget.question.answers)
+                  _buildAnswers(question.id, question.answers)
                 ],
               ),
       );
@@ -352,8 +364,7 @@ class _QuestionCardState extends State<QuestionCard> {
                   ),
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.all(
-                          MediaQuery.of(context).size.width < 480 ? 8.0 : 16.0),
+                      padding: EdgeInsets.all(_screenWidth < 550 ? 8.0 : 16.0),
                       child: AutoSizeText(
                         answer.label['en'] ?? "",
                         // minFontSize: 12.0,
@@ -396,7 +407,7 @@ class _QuestionCardState extends State<QuestionCard> {
       );
   // Card(
   //   child: Container(
-  //     width: MediaQuery.of(context).size.width / 2 + 32.0,
+  //     width: _screenWidth / 2 + 32.0,
   //     child: Stack(
   //       children: [
   //         Positioned.fill(
@@ -480,7 +491,7 @@ class _QuestionCardState extends State<QuestionCard> {
         initiallyExpanded: isSelected,
         children: [
           Container(
-            height: MediaQuery.of(context).size.height / 5,
+            height: _screenHeight / 5,
             width: double.infinity,
             child: CupertinoPicker(
               magnification: 1.5,
@@ -596,8 +607,7 @@ class _QuestionCardState extends State<QuestionCard> {
             splashColor: isSelected ? Color(0x40FFC107) : null,
             highlightColor: isSelected ? Color(0x20FFC107) : null,
             child: Container(
-              padding: EdgeInsets.all(
-                  MediaQuery.of(context).size.height <= 680 ? 8 : 12),
+              padding: EdgeInsets.all(_screenHeight <= 680 ? 8 : 12),
               width: double.infinity,
               child: Text(
                 answer.label['en'],
@@ -643,34 +653,30 @@ class _QuestionCardState extends State<QuestionCard> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Image.network(
-                          product.imageURL,
-                          frameBuilder: (_, child, frame, isLoaded) => isLoaded
-                              ? FittedBox(child: child)
-                              : Stack(
-                                  children: [
-                                    Center(child: CircularProgressIndicator()),
-                                    Center(
-                                      child: AnimatedOpacity(
-                                        opacity: frame == null ? 0 : 1,
-                                        duration: Duration(seconds: 1),
-                                        child: child,
-                                      ),
-                                    ),
-                                  ],
+                  Expanded(
+                    flex: 5,
+                    child: Image.network(
+                      product.imageURL,
+                      frameBuilder: (_, child, frame, isLoaded) => isLoaded
+                          ? child
+                          : Stack(
+                              children: [
+                                Center(child: CircularProgressIndicator()),
+                                Center(
+                                  child: AnimatedOpacity(
+                                    opacity: frame == null ? 0 : 1,
+                                    duration: Duration(seconds: 1),
+                                    child: child,
+                                  ),
                                 ),
-                          errorBuilder: (_, __, ___) => Icon(
-                            MdiIcons.tag,
-                            color: Colors.black26,
-                            size: 32.0,
-                          ),
-                        ),
+                              ],
+                            ),
+                      errorBuilder: (_, __, ___) => Icon(
+                        MdiIcons.tag,
+                        color: Colors.black26,
+                        size: 32.0,
                       ),
-                    ],
+                    ),
                   ),
                   Divider(
                     height: 1.0,
@@ -678,8 +684,7 @@ class _QuestionCardState extends State<QuestionCard> {
                   ),
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.all(
-                          MediaQuery.of(context).size.width < 480 ? 8.0 : 16.0),
+                      padding: EdgeInsets.all(_screenWidth < 550 ? 8.0 : 16.0),
                       child: AutoSizeText(
                         product.name,
                         // minFontSize: 12.0,

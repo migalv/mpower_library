@@ -10,6 +10,9 @@ import 'package:meta/meta.dart';
 abstract class DynamicFormsRepository {
   DynamicForm initialForm;
   FirebaseUser currentUser;
+  final String codeVersion;
+
+  DynamicFormsRepository(this.codeVersion);
 
   Stream<Map<String, List<Map>>> get formResultsStream =>
       _formResultsStreamController.stream;
@@ -47,6 +50,7 @@ abstract class DynamicFormsRepository {
         },
       },
       "last_updated_at": DateTime.now().millisecondsSinceEpoch,
+      "last_answer_code_version": codeVersion,
     }, merge: true);
   }
 
@@ -64,16 +68,17 @@ abstract class DynamicFormsRepository {
         .collection("form_results")
         .document(currentUser.uid)
         .setData({
-      "email_list": {
-        "$formId": emails,
-      }
+      "notify_emails": emails,
     }, merge: true);
   }
 
   /// Updates the value of the form results
   void formFinished(Map<String, List<Map>> formResults) {
     _formResultsStreamController.add(formResults);
-    // TODO CALL CLOUD FUNCTION TO NOTIFY THAT THE FORM WAS FINISHED
+    Firestore.instance
+        .collection("form_results")
+        .document(currentUser.uid)
+        .setData({"completed_forms": formResults.keys}, merge: true);
   }
 
   void dispose() {

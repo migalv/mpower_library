@@ -1,4 +1,5 @@
-import 'dart:math';
+import 'dart:async';
+import 'dart:collection';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
@@ -14,10 +15,18 @@ class DynamicFormPage extends StatefulWidget {
 
 class _DynamicFormPageState extends State<DynamicFormPage> {
   DynamicFormBloc _dynamicFormBloc;
+  Queue<QuestionCard> _questionCards;
+  StreamSubscription _streamSubscription;
+  final _animationDuration = Duration(milliseconds: 400);
 
   @override
   void didChangeDependencies() {
     _dynamicFormBloc = Provider.of<DynamicFormBloc>(context);
+    if (_streamSubscription == null)
+      _streamSubscription =
+          _dynamicFormBloc.reOrderStack.listen(_updateQuestionCards);
+    _initQuestionCards();
+
     KeyboardVisibility.onChange.listen((bool visible) {
       _dynamicFormBloc.updateKeyboardVisibility(visible);
     });
@@ -34,6 +43,7 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
           _buildFormTitle(),
           _buildGreetingText(),
           _buildQuestionCarousel(),
+          _buildCodeVersion(_dynamicFormBloc.codeVersion),
         ],
       ),
     );
@@ -156,40 +166,65 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
         ),
       );
 
-  Widget _buildQuestionCarousel() => StreamBuilder<DynamicForm>(
-        stream: _dynamicFormBloc.currentForm,
-        builder: (_, currentFormSnapshot) {
-          DynamicForm currentForm;
-          double screenHeight = MediaQuery.of(context).size.height;
-          double screenWidth = MediaQuery.of(context).size.width;
-          if (currentFormSnapshot.hasData == false ||
-              currentFormSnapshot.hasError)
-            return Center(child: CircularProgressIndicator());
-          else
-            currentForm = currentFormSnapshot.data;
+  Widget _buildQuestionCarousel() {
+    double screenHeight = MediaQuery.of(context).size.height;
 
-          double cardWidth = min(screenWidth - 70, 480.0);
-          double cardHeight =
-              screenHeight <= 700 ? screenHeight / 1.75 : screenHeight / 2;
-          double padding = 18.0;
+    double cardHeight =
+        screenHeight <= 700 ? screenHeight / 1.75 : screenHeight / 2;
+    double padding = 18.0;
 
-          return Container(
-            height: cardHeight + padding * 2,
-            child: Stack(
-              children: currentForm.questions
-                  .map(
-                    (question) => QuestionCard(
-                      cardWidth: cardWidth,
-                      cardHeight: cardHeight,
-                      question: question,
-                    ),
-                  )
-                  .cast<Widget>()
-                  .toList(),
-            ),
-          );
-        },
+    return Container(
+      height: cardHeight + padding * 2,
+      child: Stack(children: _questionCards.toList()),
+    );
+  }
+
+  Widget _buildCodeVersion(String codeVersion) => Text(
+        codeVersion,
+        style: Theme.of(context).textTheme.caption,
       );
+
+  // METHODS
+  void _initQuestionCards() {
+    if (_questionCards == null) {
+      setState(() {
+        _questionCards = Queue();
+        for (int i = 1; i < _dynamicFormBloc.maxQuestionCards; i++)
+          _questionCards.add(QuestionCard(
+            animationDuration: _animationDuration,
+            key: UniqueKey(),
+            index: i,
+          ));
+        _questionCards.add(QuestionCard(
+          animationDuration: _animationDuration,
+          key: UniqueKey(),
+          index: 0,
+        ));
+      });
+    }
+  }
+
+  void _updateQuestionCards(bool forward) {
+    // Is moving forward (next question)
+    setState(() {
+      if (forward == true) {
+        QuestionCard firstQuestion = _questionCards.removeFirst();
+        _questionCards.add(firstQuestion);
+      } // Is moving backwards (prev question)
+      else {
+        Future.delayed(_animationDuration, () {
+          QuestionCard lastQuestion = _questionCards.removeLast();
+          _questionCards.addFirst(lastQuestion);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _streamSubscription.cancel();
+    super.dispose();
+  }
 }
 
 // OLD TITLE BUILDER

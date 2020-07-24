@@ -8,11 +8,17 @@ import 'package:rxdart/rxdart.dart';
 class DynamicFormBloc {
   final String initialFormId;
   final DynamicFormsRepository repository;
+  final int maxQuestionCards = 6;
+  String _codeVersion;
+  String get codeVersion => _codeVersion;
 
   List<DynamicForm> get _forms => _formsController.value;
   Map<String, List<Map>> _formResults;
   int _currentFormIndex;
+  DynamicForm _currentForm;
+  Question _currentQuestion;
   Question _firstQuestion;
+  List<Question> _previousQuestions = [];
 
   /// Indicates if the form is being repeated. If so, it tells you on which
   /// repetition we are
@@ -24,16 +30,15 @@ class DynamicFormBloc {
       _currentFormResultsController.stream;
   ValueObservable<ButtonStatus> get nextButtonStatus =>
       _nextButtonStatusController.stream;
-  ValueObservable<Question> get currentQuestion =>
-      _currentQuestionController.stream;
-  ValueObservable<List<String>> get previousQuestions =>
-      _previousQuestionsController.stream;
-  ValueObservable<DynamicForm> get currentForm => _currentFormController.stream;
   Stream<List<DynamicForm>> get forms => _formsController.stream;
   Stream<bool> get isKeyboardVisible => _isKeyboardVisibleController.stream;
   Stream<bool> get isFirstQuestion => _isFirstQuestionController.stream;
   Stream<Map<String, String>> get greetingData =>
       _greetingDataController.stream;
+
+  ValueObservable<QuestionState> get questionState =>
+      _questionStateController.stream;
+  Stream<bool> get reOrderStack => _reOrderStackController.stream;
 
   Stream<bool> get isBackButtonVisible => _isBackButtonVisibleController.stream;
 
@@ -41,28 +46,25 @@ class DynamicFormBloc {
   final _initialFormTitleController = StreamController<String>();
   final _currentFormResultsController = BehaviorSubject<Map<String, Map>>();
   final _nextButtonStatusController = BehaviorSubject<ButtonStatus>();
-  final _currentQuestionController = BehaviorSubject<Question>();
-  final _previousQuestionsController = BehaviorSubject<List<String>>.seeded([]);
-  final _currentFormController = BehaviorSubject<DynamicForm>();
-  final _currentCardPageController = BehaviorSubject<double>();
-  final _currentTitlePageController = PublishSubject<double>();
-  final _titlesController = BehaviorSubject<List<String>>.seeded([]);
   final _formsController = BehaviorSubject<List<DynamicForm>>();
   final _isKeyboardVisibleController = BehaviorSubject<bool>();
   final _isFirstQuestionController = StreamController<bool>();
   final _greetingDataController = StreamController<Map<String, String>>();
   final _isBackButtonVisibleController = BehaviorSubject<bool>();
+  final _questionStateController = BehaviorSubject<QuestionState>();
+  final _reOrderStackController = BehaviorSubject<bool>();
+
+  QuestionState get _questionState => _questionStateController.value;
 
   // Getters
   bool get _isCurrentQuestionAnswered =>
       currentFormResults.value != null &&
-      currentFormResults.value[currentQuestion.value.id] != null;
+      currentFormResults.value[_currentQuestion.id] != null;
   Answer get _currentAnswer => _isCurrentQuestionAnswered &&
-          currentFormResults.value[currentQuestion.value.id][Answer.ID] != null
-      ? currentQuestion.value.answers.singleWhere(
+          currentFormResults.value[_currentQuestion.id][Answer.ID] != null
+      ? _currentQuestion.answers.singleWhere(
           (a) =>
-              a.id ==
-              currentFormResults.value[currentQuestion.value.id][Answer.ID],
+              a.id == currentFormResults.value[_currentQuestion.id][Answer.ID],
           orElse: () => null)
       : null;
 
@@ -72,6 +74,7 @@ class DynamicFormBloc {
     @required this.initialFormId,
     @required this.repository,
   }) {
+    _codeVersion = repository.codeVersion;
     repository.getFormWithId(initialFormId).then((initialForm) async {
       await repository.signInAnonymously();
       repository.updateEmailList(
@@ -80,15 +83,29 @@ class DynamicFormBloc {
       repetitionIndex = 0;
       _initialFormTitleController.add(initialForm.title);
       _formsController.add([initialForm]);
-      _currentFormController.add(initialForm);
+      _currentForm = initialForm;
       _firstQuestion = initialForm.questions.first;
+
+      List<Question> questions = [];
+
+      questions.add(_firstQuestion);
+      for (int i = 1; i < maxQuestionCards; i++) questions.add(null);
+
+      _questionStateController.add(QuestionState(
+        0,
+        questions,
+        maxQuestionCards,
+      ));
+
+      _currentQuestion = _firstQuestion;
+
       _greetingDataController.add({
         "title": initialForm.greetingTitle,
         "subtitle": initialForm.greetingSubtitle,
       });
-      currentQuestion.listen((currentQuestion) =>
-          _isFirstQuestionController.add(_firstQuestion == currentQuestion));
-      _currentQuestionController.add(initialForm.questions.first);
+      questionState.listen((questionState) => _isFirstQuestionController.add(
+          _firstQuestion ==
+              questionState.questions[questionState.currentIndex]));
 
       _formResults = {};
       _currentFormIndex = 0;
@@ -99,48 +116,60 @@ class DynamicFormBloc {
   void setValue(Answer answer, dynamic value) {
     Map<String, Map> results = currentFormResults.value ?? {};
     Map answerResults = {
-      Question.LABEL: currentQuestion.value.label,
+      Question.LABEL: _currentQuestion.label,
       Answer.LABEL: answer.label,
       Answer.ID: answer.id,
       Answer.KEY: answer.key,
       "value": value,
-      Question.QUESTION_PURPOSE: currentQuestion.value.questionPurpose,
+      Question.QUESTION_PURPOSE: _currentQuestion.questionPurpose,
+      Question.APPLIANCE_KEY: _currentQuestion.applianceKey,
     };
 
-    results[currentQuestion.value.id] = answerResults;
+    results[_currentQuestion.id] = answerResults;
     _currentFormResultsController.add(results);
-
-    repository.uploadAnswer(
-      currentForm.value.id,
-      currentQuestion.value.id,
-      answerResults,
-      repetitionIndex,
-    );
 
     _updateButtonStatus();
   }
 
   void nextQuestion() {
-    _previousQuestionsController
-        .add(previousQuestions.value..add(currentQuestion.value.id));
+    _previousQuestions.add(_currentQuestion);
 
-    Question question = currentForm.value.questions.singleWhere(
+    Question question = _currentForm.questions.singleWhere(
       (q) => q.id == _currentAnswer.nextQuestionId,
       orElse: () => null,
     );
-    _currentQuestionController.add(question);
+
+    repository.uploadAnswer(
+      _currentForm.id,
+      _currentQuestion.id,
+      currentFormResults.value[_currentQuestion.id],
+      repetitionIndex,
+    );
+
+    _currentQuestion = question;
+    _questionState.changeQuestionAtNextIndex(question);
+    _questionState.nextIndex();
+    _questionStateController.add(_questionState);
+    _reOrderStackController.add(true);
 
     _updateButtonStatus();
   }
 
   void saveAndRestartForm() {
-    if (_formResults[currentForm.value.id] == null)
-      _formResults[currentForm.value.id] = List();
-    _formResults[currentForm.value.id].add(currentFormResults.value);
-    _previousQuestionsController.add([]);
-    _currentQuestionController.add(currentForm.value.questions
-        .singleWhere((q) => q.id == _currentAnswer.nextQuestionId));
-    _currentFormResultsController.add(null);
+    if (_formResults[_currentForm.id] == null)
+      _formResults[_currentForm.id] = List();
+    _formResults[_currentForm.id].add(currentFormResults.value);
+
+    Question nextQuestion = _currentForm.questions
+        .singleWhere((q) => q.id == _currentAnswer.nextQuestionId);
+
+    _currentQuestion = nextQuestion;
+    _questionState.changeQuestionAtNextIndex(nextQuestion);
+    _questionState.nextIndex();
+    _questionStateController.add(_questionState);
+    _reOrderStackController.add(true);
+
+    _currentFormResultsController.add({});
     repetitionIndex++;
 
     _updateButtonStatus();
@@ -157,9 +186,9 @@ class DynamicFormBloc {
     _nextButtonStatusController.add(ButtonStatus.LOADING);
     _isBackButtonVisibleController.add(false);
 
-    if (_formResults[currentForm.value.id] == null)
-      _formResults[currentForm.value.id] = List();
-    _formResults[currentForm.value.id].add(currentFormResults.value);
+    if (_formResults[_currentForm.id] == null)
+      _formResults[_currentForm.id] = List();
+    _formResults[_currentForm.id].add(currentFormResults.value);
 
     repetitionIndex = 0;
 
@@ -184,10 +213,18 @@ class DynamicFormBloc {
     // There are more forms to show
     if (_forms.length > _currentFormIndex + 1) {
       _currentFormIndex++;
-      _previousQuestionsController.add([]);
 
-      _currentFormController.add(_forms[_currentFormIndex]);
-      _currentQuestionController.add(currentForm.value.questions.first);
+      _currentForm = _forms[_currentFormIndex];
+      Question nextQuestion = _currentForm.questions.first;
+
+      _currentQuestion = nextQuestion;
+      _questionState.changeQuestionAtNextIndex(nextQuestion);
+      _questionState.nextIndex();
+      _questionStateController.add(_questionState);
+      _reOrderStackController.add(true);
+
+      _previousQuestions.clear();
+
       _currentFormResultsController.add(null);
 
       _updateButtonStatus();
@@ -201,8 +238,7 @@ class DynamicFormBloc {
   }
 
   void _updateButtonStatus() {
-    _isBackButtonVisibleController
-        .add(_previousQuestionsController.value?.isNotEmpty ?? false);
+    _isBackButtonVisibleController.add(_previousQuestions.isNotEmpty);
     if (_isCurrentQuestionAnswered) {
       if (_currentAnswer.restartForm)
         _nextButtonStatusController.add(ButtonStatus.RESTART);
@@ -219,13 +255,15 @@ class DynamicFormBloc {
       _isKeyboardVisibleController.add(isVisible);
 
   void goToPreviousQuestion() {
-    currentFormResults.value.remove(currentQuestion.value.id);
+    currentFormResults.value.remove(_currentQuestion.id);
 
-    _currentQuestionController.add(currentForm.value.questions.singleWhere(
-        (q) => q.id == _previousQuestionsController.value.last,
-        orElse: () => null));
-    _previousQuestionsController
-        .add(_previousQuestionsController.value..removeLast());
+    Question prevQuestion = _previousQuestions.removeLast();
+    _currentQuestion = prevQuestion;
+    _questionState.changeQuestionAtPrevIndex(prevQuestion);
+    _questionState.prevIndex();
+    _questionStateController.add(_questionState);
+    _reOrderStackController.add(false);
+
     _currentFormResultsController.add(currentFormResults.value);
 
     _updateButtonStatus();
@@ -234,17 +272,53 @@ class DynamicFormBloc {
   void dispose() {
     _currentFormResultsController.close();
     _nextButtonStatusController.close();
-    _currentQuestionController.close();
-    _previousQuestionsController.close();
-    _currentFormController.close();
-    _currentCardPageController.close();
-    _currentTitlePageController.close();
-    _titlesController.close();
     _formsController.close();
     _isKeyboardVisibleController.close();
     _initialFormTitleController.close();
     _isFirstQuestionController.close();
     _greetingDataController.close();
     _isBackButtonVisibleController.close();
+    _questionStateController.close();
   }
+}
+
+class QuestionState {
+  int _currentIndex;
+  int get currentIndex => _currentIndex;
+  List<Question> _questions;
+  List<Question> get questions => _questions;
+  final int _maxQuestions;
+
+  QuestionState(this._currentIndex, this._questions, this._maxQuestions)
+      : assert(_questions != null && _questions.length == _maxQuestions);
+
+  void prevIndex() {
+    if (_currentIndex - 1 >= 0)
+      _currentIndex--;
+    else
+      _currentIndex = _maxQuestions - 1;
+  }
+
+  int indexDifference(int index) => _currentIndex - index < 0
+      ? (_currentIndex - index + _maxQuestions)
+      : _currentIndex - index;
+
+  void nextIndex() {
+    if (_currentIndex + 1 >= _maxQuestions)
+      _currentIndex = 0;
+    else
+      _currentIndex++;
+  }
+
+  int get getNextIndex =>
+      _currentIndex + 1 >= _maxQuestions ? 0 : _currentIndex + 1;
+
+  int get getPrevIndex =>
+      _currentIndex - 1 >= 0 ? _currentIndex - 1 : _maxQuestions - 1;
+
+  void changeQuestionAtNextIndex(Question newQuestion) =>
+      _questions[getNextIndex] = newQuestion;
+
+  void changeQuestionAtPrevIndex(Question newQuestion) =>
+      _questions[getPrevIndex] = newQuestion;
 }

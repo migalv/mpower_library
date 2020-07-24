@@ -18,6 +18,8 @@ class Question {
   final QuestionPurpose questionPurpose;
   final String tableId;
   final String applianceKey;
+  bool get hasNextQuestion =>
+      answers.any((answer) => answer.nextQuestionId != "END");
 
   Question.fromJson(final Map<String, dynamic> json)
       : this.id = json[ID],

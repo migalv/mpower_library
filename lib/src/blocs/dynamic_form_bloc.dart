@@ -12,6 +12,7 @@ class DynamicFormBloc {
   final int maxQuestionCards = 6;
   String _codeVersion;
   String get codeVersion => _codeVersion;
+  bool _hasAnsweredFirstQuestion;
 
   List<DynamicForm> get _forms => _formsController.value;
   Map<String, List<Map>> _formResults;
@@ -76,13 +77,14 @@ class DynamicFormBloc {
     @required this.repository,
   }) {
     _codeVersion = repository.codeVersion;
+    _hasAnsweredFirstQuestion = false;
     repository.getFormWithId(initialFormId).then((initialForm) async {
       await repository.signInAnonymously();
       repository.updateEmailList(
           emails: initialForm.emailList, formId: initialFormId);
       repository.registerAnalyticEvent(
         initialFormId: initialFormId,
-        eventName: "visitors_count",
+        eventName: "visitor_count",
         eventType: AnalyticEventType.INCREMENT,
       );
       repository.initialForm = initialForm;
@@ -145,6 +147,17 @@ class DynamicFormBloc {
       (q) => q.id == _currentAnswer.nextQuestionId,
       orElse: () => null,
     );
+
+    // If it's the first time the user has answered the first question
+    // we register the event.
+    if (_hasAnsweredFirstQuestion == false && _currentQuestion.index == 0) {
+      repository.registerAnalyticEvent(
+        initialFormId: initialFormId,
+        eventName: "user_count",
+        eventType: AnalyticEventType.INCREMENT,
+      );
+      _hasAnsweredFirstQuestion = true;
+    }
 
     repository.uploadAnswer(
       _currentForm.id,
@@ -240,6 +253,11 @@ class DynamicFormBloc {
 
     // It's the last form
     repository.formFinished(_formResults);
+    repository.registerAnalyticEvent(
+      initialFormId: initialFormId,
+      eventName: "lead_count",
+      eventType: AnalyticEventType.INCREMENT,
+    );
 
     return false;
   }

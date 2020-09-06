@@ -13,8 +13,9 @@ abstract class DynamicFormsRepository {
   FirebaseUser currentUser;
   final String codeVersion;
   int initTimestamp;
+  final isDebugging;
 
-  DynamicFormsRepository(this.codeVersion);
+  DynamicFormsRepository(this.codeVersion, {this.isDebugging});
 
   Stream<Map<String, List<Map>>> get formResultsStream =>
       _formResultsStreamController.stream;
@@ -105,21 +106,24 @@ abstract class DynamicFormsRepository {
     @required AnalyticEventType eventType,
     dynamic value,
   }) {
+    // If we are devolopping/debuggin we don't register analytic events
+    if (isDebugging == true) return;
     // If the event type is INCREMENT then the value has to be null
     assert(eventType == AnalyticEventType.INCREMENT ? value == null : true);
 
     // If the event type is VALUE then the value can't be null
     assert(eventType == AnalyticEventType.VALUE ? value != null : true);
 
-    DocumentReference doc =
-        Firestore.instance.collection("form_analytics").document(initialFormId);
+    DocumentReference doc = Firestore.instance
+        .collection("dynamic_forms_analytics")
+        .document(initialFormId);
 
     doc.get().then((docSnapshot) {
       if (docSnapshot.exists) {
         switch (eventType) {
           case AnalyticEventType.INCREMENT:
             Firestore.instance
-                .collection("form_analytics")
+                .collection("dynamic_forms_analytics")
                 .document(initialFormId)
                 .updateData({eventName: FieldValue.increment(1)});
             break;
@@ -131,7 +135,7 @@ abstract class DynamicFormsRepository {
         switch (eventType) {
           case AnalyticEventType.INCREMENT:
             Firestore.instance
-                .collection("form_analytics")
+                .collection("dynamic_forms_analytics")
                 .document(initialFormId)
                 .setData({eventName: 1});
             break;
@@ -140,7 +144,9 @@ abstract class DynamicFormsRepository {
             break;
         }
       }
-    }).catchError(() => null);
+    }).catchError((e) {
+      print(e);
+    });
   }
 
   void dispose() {

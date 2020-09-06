@@ -1,6 +1,6 @@
 name: cons_calc_lib
-description: Test library for MPower.
-version: 0.0.1
+description: Dynamic Forms Library
+version: 1.1.1
 author: Sergio Sanchez <sergio@mpower.africa>
 homepage: https://www.mpower.africa/
 
@@ -23,6 +23,7 @@ dependencies:
   flutter_keyboard_visibility: ^3.2.1
   firebase_auth: ^0.16.1
   cloud_functions: ^0.5.0
+  fluro: ^1.6.3
   
 dev_dependencies:
   flutter_test:

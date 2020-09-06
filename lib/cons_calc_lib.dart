@@ -25,3 +25,4 @@ export './src/colors.dart';
 export './src/custom_cache_manager.dart';
 export './src/theme.dart';
 export './src/dynamic_forms_repository.dart';
+export './src/router.dart';

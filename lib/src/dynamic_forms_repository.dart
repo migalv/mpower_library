@@ -11,6 +11,7 @@ abstract class DynamicFormsRepository {
   DynamicForm initialForm;
   FirebaseUser currentUser;
   final String codeVersion;
+  int initTimestamp;
 
   DynamicFormsRepository(this.codeVersion);
 
@@ -40,23 +41,28 @@ abstract class DynamicFormsRepository {
     answerResultsCopy["question_purpose"] = qp.index;
     answerResultsCopy.remove("table_id");
 
-    Firestore.instance
-        .collection("form_results")
-        .document(currentUser.uid)
-        .setData({
-      "$formId": {
-        "$repetitionIndex": {
-          "$questionId": answerResultsCopy,
+    Map<String, dynamic> data = {
+      "results": {
+        "$formId": {
+          "$repetitionIndex": {
+            "$questionId": answerResultsCopy,
+          },
         },
       },
       "last_updated_at": DateTime.now().millisecondsSinceEpoch,
       "last_answer_code_version": codeVersion,
-    }, merge: true);
+    };
+
+    Firestore.instance
+        .collection("form_results")
+        .document(initTimestamp.toString())
+        .setData(data, merge: true);
   }
 
   /// Signs in anonymously
   Future<void> signInAnonymously() async {
     currentUser = await FirebaseAuth.instance.currentUser();
+    initTimestamp = DateTime.now().millisecondsSinceEpoch;
     if (currentUser == null)
       currentUser = (await FirebaseAuth.instance.signInAnonymously()).user;
   }
@@ -66,7 +72,7 @@ abstract class DynamicFormsRepository {
       {@required List<String> emails, @required String formId}) {
     Firestore.instance
         .collection("form_results")
-        .document(currentUser.uid)
+        .document(initTimestamp.toString())
         .setData({
       "notify_emails": emails,
     }, merge: true);
@@ -77,7 +83,7 @@ abstract class DynamicFormsRepository {
     _formResultsStreamController.add(formResults);
     Firestore.instance
         .collection("form_results")
-        .document(currentUser.uid)
+        .document(initTimestamp.toString())
         .setData({"completed_forms": formResults.keys}, merge: true);
   }
 

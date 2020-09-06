@@ -123,6 +123,7 @@ class DynamicFormBloc {
       "value": value,
       Question.QUESTION_PURPOSE: _currentQuestion.questionPurpose,
       Question.APPLIANCE_KEY: _currentQuestion.applianceKey,
+      Question.INDEX: _currentQuestion.index,
     };
 
     results[_currentQuestion.id] = answerResults;
@@ -134,7 +135,7 @@ class DynamicFormBloc {
   void nextQuestion() {
     _previousQuestions.add(_currentQuestion);
 
-    Question question = _currentForm.questions.singleWhere(
+    Question nextQuestion = _currentForm.questions.singleWhere(
       (q) => q.id == _currentAnswer.nextQuestionId,
       orElse: () => null,
     );
@@ -146,8 +147,8 @@ class DynamicFormBloc {
       repetitionIndex,
     );
 
-    _currentQuestion = question;
-    _questionState.changeQuestionAtNextIndex(question);
+    _currentQuestion = nextQuestion;
+    _questionState.changeQuestionAtNextIndex(nextQuestion);
     _questionState.nextIndex();
     _questionStateController.add(_questionState);
     _reOrderStackController.add(true);

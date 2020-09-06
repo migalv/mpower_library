@@ -571,6 +571,7 @@ class _QuestionCardState extends State<QuestionCard> {
                   String result = validator(value);
                   if (result != null) return result;
                 }
+                _dynamicFormBloc.setValue(answer, value);
                 return null;
               },
               maxLines: 1,
@@ -583,8 +584,6 @@ class _QuestionCardState extends State<QuestionCard> {
                 hintStyle: Theme.of(context).textTheme.subtitle2.copyWith(
                     fontWeight: FontWeight.w600, color: Colors.black45),
               ),
-              onFieldSubmitted: (text) =>
-                  _dynamicFormBloc.setValue(answer, text),
               onTap: () => _dynamicFormBloc.setValue(
                   answer, textFieldControllers[answer.id].text),
             ),

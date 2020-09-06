@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cons_calc_lib/src/dynamic_forms_repository.dart';
+import 'package:cons_calc_lib/src/models/analytic_event_type.dart';
 import 'package:flutter/material.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
 import 'package:rxdart/rxdart.dart';
@@ -79,6 +80,11 @@ class DynamicFormBloc {
       await repository.signInAnonymously();
       repository.updateEmailList(
           emails: initialForm.emailList, formId: initialFormId);
+      repository.registerAnalyticEvent(
+        initialFormId: initialFormId,
+        eventName: "visitors_count",
+        eventType: AnalyticEventType.INCREMENT,
+      );
       repository.initialForm = initialForm;
       repetitionIndex = 0;
       _initialFormTitleController.add(initialForm.title);

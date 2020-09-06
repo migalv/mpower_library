@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cons_calc_lib/cons_calc_lib.dart';
+import 'package:cons_calc_lib/src/models/analytic_event_type.dart';
 import 'package:cons_calc_lib/src/models/dynamic_form_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
@@ -85,6 +86,61 @@ abstract class DynamicFormsRepository {
         .collection("form_results")
         .document(initTimestamp.toString())
         .setData({"completed_forms": formResults.keys}, merge: true);
+  }
+
+  /// Function used to register Analytic Events
+  ///
+  /// [String initialFormId] is refered to the id of the initial form from where
+  /// the event was registered
+  ///
+  /// [String eventName] is the name of the event that is being registered
+  ///
+  /// [AnalyticEventType eventType] is an enum to specify the type of event that
+  /// is being registered
+  ///
+  /// [dynamic value] is an optional parameter used when eventType is VALUE
+  void registerAnalyticEvent({
+    @required String initialFormId,
+    @required String eventName,
+    @required AnalyticEventType eventType,
+    dynamic value,
+  }) {
+    // If the event type is INCREMENT then the value has to be null
+    assert(eventType == AnalyticEventType.INCREMENT ? value == null : true);
+
+    // If the event type is VALUE then the value can't be null
+    assert(eventType == AnalyticEventType.VALUE ? value != null : true);
+
+    DocumentReference doc =
+        Firestore.instance.collection("form_analytics").document(initialFormId);
+
+    doc.get().then((docSnapshot) {
+      if (docSnapshot.exists) {
+        switch (eventType) {
+          case AnalyticEventType.INCREMENT:
+            Firestore.instance
+                .collection("form_analytics")
+                .document(initialFormId)
+                .updateData({eventName: FieldValue.increment(1)});
+            break;
+          case AnalyticEventType.VALUE:
+            // TODO: Handle this case.
+            break;
+        }
+      } else {
+        switch (eventType) {
+          case AnalyticEventType.INCREMENT:
+            Firestore.instance
+                .collection("form_analytics")
+                .document(initialFormId)
+                .setData({eventName: 1});
+            break;
+          case AnalyticEventType.VALUE:
+            // TODO: Handle this case.
+            break;
+        }
+      }
+    }).catchError(() => null);
   }
 
   void dispose() {

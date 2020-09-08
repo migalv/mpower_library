@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cons_calc_lib/src/colors.dart';
+import 'package:cons_calc_lib/src/pages/admin_analytics_page.dart';
 import 'package:cons_calc_lib/src/pages/admin_forms_results_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -46,7 +47,26 @@ class AdminDashboardPage extends StatelessWidget {
                       builder: (_) => AdminFormsResultsPage())),
                   child: Center(
                     child: Text(
-                      "View form results",
+                      "View form Results",
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headline5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              margin:
+                  const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+              height: 128.0,
+              width: 256.0,
+              child: Card(
+                child: InkWell(
+                  onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => AdminAnalyticsPage())),
+                  child: Center(
+                    child: Text(
+                      "View form Analytics",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headline5,
                     ),

@@ -548,7 +548,7 @@ class _QuestionCardState extends State<QuestionCard> {
       if (validatorKey == "max_length" && validatorValue != null) {
         validators.add((strToValidate) {
           if (strToValidate.length > (int.tryParse(validatorValue) ?? 1))
-            return "Max. length $validatorValue}";
+            return "Max. length $validatorValue";
           return null;
         });
       }

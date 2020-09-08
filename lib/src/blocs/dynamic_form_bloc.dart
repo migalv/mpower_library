@@ -80,13 +80,13 @@ class DynamicFormBloc {
     _hasAnsweredFirstQuestion = false;
     repository.getFormWithId(initialFormId).then((initialForm) async {
       await repository.signInAnonymously();
-      repository.updateEmailList(
-          emails: initialForm.emailList, formId: initialFormId);
+
       repository.registerAnalyticEvent(
         initialFormId: initialFormId,
         eventName: "visitor_count",
         eventType: AnalyticEventType.INCREMENT,
       );
+
       repository.initialForm = initialForm;
       repetitionIndex = 0;
       _initialFormTitleController.add(initialForm.title);
@@ -151,11 +151,14 @@ class DynamicFormBloc {
     // If it's the first time the user has answered the first question
     // we register the event.
     if (_hasAnsweredFirstQuestion == false && _currentQuestion.index == 0) {
+      repository.formStarted();
+
       repository.registerAnalyticEvent(
         initialFormId: initialFormId,
         eventName: "user_count",
         eventType: AnalyticEventType.INCREMENT,
       );
+
       _hasAnsweredFirstQuestion = true;
     }
 

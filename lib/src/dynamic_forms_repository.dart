@@ -28,6 +28,18 @@ abstract class DynamicFormsRepository {
   /// if there was an error fetching the form the function will return null
   Future<DynamicForm> getFormWithId(String formId);
 
+  /// Creates a document in Firestore that represents the initiation on a form
+  void formStarted() {
+    Firestore.instance
+        .collection("form_results")
+        .document(initTimestamp.toString())
+        .setData({
+      "notify_emails": initialForm.emailList,
+      "starting_form_id": initialForm.id,
+      "starting_timestamp": initTimestamp,
+    }, merge: true);
+  }
+
   /// Uploads the answer of a question [answerResults] for the form with id
   /// [formId] that a user with id [userId] answered. The [repetitionIndex] is
   /// used to know to which index insert the answer
@@ -67,17 +79,6 @@ abstract class DynamicFormsRepository {
     initTimestamp = DateTime.now().millisecondsSinceEpoch;
     if (currentUser == null)
       currentUser = (await FirebaseAuth.instance.signInAnonymously()).user;
-  }
-
-  /// Update the email list for a form
-  void updateEmailList(
-      {@required List<String> emails, @required String formId}) {
-    Firestore.instance
-        .collection("form_results")
-        .document(initTimestamp.toString())
-        .setData({
-      "notify_emails": emails,
-    }, merge: true);
   }
 
   /// Updates the value of the form results

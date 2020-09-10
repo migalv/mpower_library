@@ -7,6 +7,7 @@ export './src/models/consumption_product_model.dart';
 export './src/models/dynamic_form_model.dart';
 export './src/models/product_bundle_model.dart';
 export './src/models/question_model.dart';
+export './src/models/product_model.dart';
 export './src/pages/load_category_page.dart';
 export './src/pages/load_list_page.dart';
 export './src/pages/dynamic_form_page.dart';

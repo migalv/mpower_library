@@ -141,8 +141,6 @@ class DynamicFormBloc {
   }
 
   void nextQuestion() {
-    _previousQuestions.add(_currentQuestion);
-
     Question nextQuestion = _currentForm.questions.singleWhere(
       (q) => q.id == _currentAnswer.nextQuestionId,
       orElse: () => null,
@@ -169,6 +167,15 @@ class DynamicFormBloc {
       repetitionIndex,
     );
 
+    repository.updateLastAnsweredQuestion(
+      initialFormId: initialFormId,
+      currentQuestion: _currentQuestion,
+      previousQuestion:
+          _previousQuestions.isEmpty ? null : _previousQuestions.last,
+    );
+
+    _previousQuestions.add(_currentQuestion);
+
     _currentQuestion = nextQuestion;
     _questionState.changeQuestionAtNextIndex(nextQuestion);
     _questionState.nextIndex();
@@ -185,6 +192,12 @@ class DynamicFormBloc {
 
     Question nextQuestion = _currentForm.questions
         .singleWhere((q) => q.id == _currentAnswer.nextQuestionId);
+
+    repository.updateLastAnsweredQuestion(
+      initialFormId: initialFormId,
+      previousQuestion:
+          _previousQuestions.isEmpty ? null : _previousQuestions.last,
+    );
 
     _currentQuestion = nextQuestion;
     _questionState.changeQuestionAtNextIndex(nextQuestion);
@@ -214,6 +227,12 @@ class DynamicFormBloc {
     _formResults[_currentForm.id].add(currentFormResults.value);
 
     repetitionIndex = 0;
+
+    repository.updateLastAnsweredQuestion(
+      initialFormId: initialFormId,
+      previousQuestion:
+          _previousQuestions.isEmpty ? null : _previousQuestions.last,
+    );
 
     // We add the next forms to the list
     for (Map answerData in currentFormResults.value.values) {
@@ -286,6 +305,14 @@ class DynamicFormBloc {
     currentFormResults.value.remove(_currentQuestion.id);
 
     Question prevQuestion = _previousQuestions.removeLast();
+
+    repository.updateLastAnsweredQuestion(
+      initialFormId: initialFormId,
+      currentQuestion:
+          _previousQuestions.isEmpty ? null : _previousQuestions.last,
+      previousQuestion: prevQuestion,
+    );
+
     _currentQuestion = prevQuestion;
     _questionState.changeQuestionAtPrevIndex(prevQuestion);
     _questionState.prevIndex();

@@ -65,6 +65,7 @@ abstract class DynamicFormsRepository {
       },
       "last_updated_at": DateTime.now().millisecondsSinceEpoch,
       "last_answer_code_version": codeVersion,
+      "last_answered_question": questionId,
     };
 
     Firestore.instance
@@ -123,10 +124,7 @@ abstract class DynamicFormsRepository {
       if (docSnapshot.exists) {
         switch (eventType) {
           case AnalyticEventType.INCREMENT:
-            Firestore.instance
-                .collection("dynamic_forms_analytics")
-                .document(initialFormId)
-                .updateData({eventName: FieldValue.increment(1)});
+            doc.updateData({eventName: FieldValue.increment(1)});
             break;
           case AnalyticEventType.VALUE:
             // TODO: Handle this case.
@@ -135,10 +133,7 @@ abstract class DynamicFormsRepository {
       } else {
         switch (eventType) {
           case AnalyticEventType.INCREMENT:
-            Firestore.instance
-                .collection("dynamic_forms_analytics")
-                .document(initialFormId)
-                .setData({eventName: 1});
+            doc.setData({eventName: 1});
             break;
           case AnalyticEventType.VALUE:
             // TODO: Handle this case.
@@ -148,6 +143,37 @@ abstract class DynamicFormsRepository {
     }).catchError((e) {
       print(e);
     });
+  }
+
+  void updateLastAnsweredQuestion({
+    @required String initialFormId,
+    Question currentQuestion,
+    Question previousQuestion,
+  }) {
+    DocumentReference doc = Firestore.instance
+        .collection("dynamic_forms_analytics")
+        .document(initialFormId);
+
+    if (currentQuestion != null && previousQuestion != null)
+      doc.setData({
+        "last_answered_question": {
+          previousQuestion.id: FieldValue.increment(-1),
+          currentQuestion.id: FieldValue.increment(1),
+        },
+      }, merge: true);
+    else if (currentQuestion == null && previousQuestion != null) {
+      doc.setData({
+        "last_answered_question": {
+          previousQuestion.id: FieldValue.increment(-1),
+        },
+      }, merge: true);
+    } else if (currentQuestion != null && previousQuestion == null) {
+      doc.setData({
+        "last_answered_question": {
+          currentQuestion.id: FieldValue.increment(1),
+        },
+      }, merge: true);
+    }
   }
 
   void dispose() {

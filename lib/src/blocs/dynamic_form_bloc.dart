@@ -190,6 +190,13 @@ class DynamicFormBloc {
       _formResults[_currentForm.id] = List();
     _formResults[_currentForm.id].add(currentFormResults.value);
 
+    repository.uploadAnswer(
+      _currentForm.id,
+      _currentQuestion.id,
+      currentFormResults.value[_currentQuestion.id],
+      repetitionIndex,
+    );
+
     Question nextQuestion = _currentForm.questions
         .singleWhere((q) => q.id == _currentAnswer.nextQuestionId);
 
@@ -227,6 +234,13 @@ class DynamicFormBloc {
     _formResults[_currentForm.id].add(currentFormResults.value);
 
     repetitionIndex = 0;
+
+    repository.uploadAnswer(
+      _currentForm.id,
+      _currentQuestion.id,
+      currentFormResults.value[_currentQuestion.id],
+      repetitionIndex,
+    );
 
     repository.updateLastAnsweredQuestion(
       initialFormId: initialFormId,

@@ -106,6 +106,10 @@ class DynamicFormBloc {
       ));
 
       _currentQuestion = _firstQuestion;
+      repository.updateLastViewedQuestion(
+        initialFormId: initialFormId,
+        currentQuestion: _currentQuestion,
+      );
 
       _greetingDataController.add({
         "title": initialForm.greetingTitle,
@@ -174,6 +178,12 @@ class DynamicFormBloc {
           _previousQuestions.isEmpty ? null : _previousQuestions.last,
     );
 
+    repository.updateLastViewedQuestion(
+      initialFormId: initialFormId,
+      currentQuestion: nextQuestion,
+      previousQuestion: _currentQuestion,
+    );
+
     _previousQuestions.add(_currentQuestion);
 
     _currentQuestion = nextQuestion;
@@ -204,6 +214,12 @@ class DynamicFormBloc {
       initialFormId: initialFormId,
       previousQuestion:
           _previousQuestions.isEmpty ? null : _previousQuestions.last,
+    );
+
+    repository.updateLastViewedQuestion(
+      initialFormId: initialFormId,
+      currentQuestion: nextQuestion,
+      previousQuestion: _currentQuestion,
     );
 
     _currentQuestion = nextQuestion;
@@ -273,6 +289,12 @@ class DynamicFormBloc {
       _currentForm = _forms[_currentFormIndex];
       Question nextQuestion = _currentForm.questions.first;
 
+      repository.updateLastViewedQuestion(
+        initialFormId: initialFormId,
+        currentQuestion: nextQuestion,
+        previousQuestion: _currentQuestion,
+      );
+
       _currentQuestion = nextQuestion;
       _questionState.changeQuestionAtNextIndex(nextQuestion);
       _questionState.nextIndex();
@@ -288,6 +310,11 @@ class DynamicFormBloc {
     }
 
     // It's the last form
+    repository.updateLastViewedQuestion(
+      initialFormId: initialFormId,
+      previousQuestion: _currentQuestion,
+    );
+
     repository.formFinished(_formResults);
     repository.registerAnalyticEvent(
       initialFormId: initialFormId,

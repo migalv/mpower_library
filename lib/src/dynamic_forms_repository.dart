@@ -176,6 +176,37 @@ abstract class DynamicFormsRepository {
     }
   }
 
+  void updateLastViewedQuestion({
+    @required String initialFormId,
+    Question currentQuestion,
+    Question previousQuestion,
+  }) {
+    DocumentReference doc = Firestore.instance
+        .collection("dynamic_forms_analytics")
+        .document(initialFormId);
+
+    if (currentQuestion != null && previousQuestion != null)
+      doc.setData({
+        "last_viewed_question": {
+          previousQuestion.id: FieldValue.increment(-1),
+          currentQuestion.id: FieldValue.increment(1),
+        },
+      }, merge: true);
+    else if (currentQuestion == null && previousQuestion != null) {
+      doc.setData({
+        "last_viewed_question": {
+          previousQuestion.id: FieldValue.increment(-1),
+        },
+      }, merge: true);
+    } else if (currentQuestion != null && previousQuestion == null) {
+      doc.setData({
+        "last_viewed_question": {
+          currentQuestion.id: FieldValue.increment(1),
+        },
+      }, merge: true);
+    }
+  }
+
   void dispose() {
     _formResultsStreamController.close();
   }

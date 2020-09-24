@@ -13,9 +13,20 @@ abstract class DynamicFormsRepository {
   FirebaseUser currentUser;
   final String codeVersion;
   int initTimestamp;
-  final isDebugging;
+  final bool isDebugging;
 
-  DynamicFormsRepository(this.codeVersion, {this.isDebugging});
+  /// The source where the user came from
+  final String source;
+
+  /// The name of the campaign the user came from
+  final String campaign;
+
+  DynamicFormsRepository(
+    this.codeVersion, {
+    this.isDebugging,
+    this.source = "organic",
+    this.campaign,
+  });
 
   Stream<Map<String, List<Map>>> get formResultsStream =>
       _formResultsStreamController.stream;
@@ -37,7 +48,21 @@ abstract class DynamicFormsRepository {
       "notify_emails": initialForm.emailList,
       "starting_form_id": initialForm.id,
       "starting_timestamp": initTimestamp,
+      "source": source,
+      "campaign": campaign,
     }, merge: true);
+
+    registerAnalyticEvent(
+      initialFormId: initialForm.id,
+      eventName: "source.$source",
+      eventType: AnalyticEventType.INCREMENT,
+    );
+
+    registerAnalyticEvent(
+      initialFormId: initialForm.id,
+      eventName: "campaign.$campaign",
+      eventType: AnalyticEventType.INCREMENT,
+    );
   }
 
   /// Uploads the answer of a question [answerResults] for the form with id
@@ -71,7 +96,8 @@ abstract class DynamicFormsRepository {
     Firestore.instance
         .collection("form_results")
         .document(initTimestamp.toString())
-        .setData(data, merge: true);
+        .setData(data, merge: true)
+        .catchError((error) => print("This is an error: " + error));
   }
 
   /// Signs in anonymously

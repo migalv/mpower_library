@@ -726,26 +726,45 @@ class _QuestionCardState extends State<QuestionCard> {
       );
 
   // METHODS
-  void _nextQuestion(String currentQuestionId) =>
-      (_formKeys[currentQuestionId]?.currentState?.validate() ?? true)
-          ? _dynamicFormBloc.nextQuestion()
-          : null;
-
-  void _restartForm() => _dynamicFormBloc.saveAndRestartForm();
-
-  void _finishForm() => _dynamicFormBloc.finishAndSaveForm();
-
-  bool isValidURL(String url) {
-    bool valid = false;
-    var urlPattern =
-        r"(https?|http)://([-A-Z0-9.]+)(/[-A-Z0-9+&@#/%=~_|!:,.;]*)?(\?[A-Z0-9+&@#/%=~_|!:‌​,.;]*)?";
-    if (url != null) {
-      var match = new RegExp(urlPattern, caseSensitive: false).firstMatch(url);
-      valid = match != null;
-    }
-
-    return valid;
+  Future<void> _nextQuestion(String currentQuestionId) async {
+    bool response = true;
+    if (_formKeys[currentQuestionId]?.currentState?.validate() ?? true)
+      response = await _dynamicFormBloc.nextQuestion();
+    if (response == false) _showNoInternetConnectionDialog();
   }
+
+  Future<void> _restartForm() async {
+    bool response = await _dynamicFormBloc.saveAndRestartForm();
+    if (response == false) _showNoInternetConnectionDialog();
+  }
+
+  Future<void> _finishForm() async {
+    bool response = await _dynamicFormBloc.finishAndSaveForm();
+    if (response == false) _showNoInternetConnectionDialog();
+  }
+
+  void _showNoInternetConnectionDialog() => showDialog(
+        context: context,
+        child: AlertDialog(
+          title: Text(
+            "Internet connection error",
+            style: Theme.of(context).textTheme.headline5,
+          ),
+          content: Container(
+            width: 256.0,
+            child: Text(
+              "Your internet connection is very poor. Try to get a more stable connection an try again.",
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
+          ),
+          actions: [
+            FlatButton(
+              child: Text("Dismiss"),
+              onPressed: () => Navigator.pop(context),
+            )
+          ],
+        ),
+      );
 
   /// Returns true if answer is the one currently selected
   /// optional parameter "value", if not null checks if the value of the answer

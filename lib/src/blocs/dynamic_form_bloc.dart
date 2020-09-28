@@ -144,7 +144,9 @@ class DynamicFormBloc {
     _updateButtonStatus();
   }
 
-  void nextQuestion() {
+  Future<bool> nextQuestion() async {
+    bool response = true;
+    _nextButtonStatusController.add(ButtonStatus.LOADING);
     Question nextQuestion = _currentForm.questions.singleWhere(
       (q) => q.id == _currentAnswer.nextQuestionId,
       orElse: () => null,
@@ -153,7 +155,12 @@ class DynamicFormBloc {
     // If it's the first time the user has answered the first question
     // we register the event.
     if (_hasAnsweredFirstQuestion == false && _currentQuestion.index == 0) {
-      repository.formStarted();
+      response = await repository.formStarted();
+
+      if (response == false) {
+        _updateButtonStatus();
+        return response;
+      }
 
       repository.registerAnalyticEvent(
         initialFormId: initialFormId,
@@ -164,12 +171,17 @@ class DynamicFormBloc {
       _hasAnsweredFirstQuestion = true;
     }
 
-    repository.uploadAnswer(
+    response = await repository.uploadAnswer(
       _currentForm.id,
       _currentQuestion.id,
       currentFormResults.value[_currentQuestion.id],
       repetitionIndex,
     );
+
+    if (response == false) {
+      _updateButtonStatus();
+      return response;
+    }
 
     repository.updateLastAnsweredQuestion(
       initialFormId: initialFormId,
@@ -193,19 +205,28 @@ class DynamicFormBloc {
     _reOrderStackController.add(true);
 
     _updateButtonStatus();
+    return response;
   }
 
-  void saveAndRestartForm() {
-    if (_formResults[_currentForm.id] == null)
-      _formResults[_currentForm.id] = List();
-    _formResults[_currentForm.id].add(currentFormResults.value);
+  Future<bool> saveAndRestartForm() async {
+    bool response = true;
+    _nextButtonStatusController.add(ButtonStatus.LOADING);
 
-    repository.uploadAnswer(
+    response = await repository.uploadAnswer(
       _currentForm.id,
       _currentQuestion.id,
       currentFormResults.value[_currentQuestion.id],
       repetitionIndex,
     );
+
+    if (response == false) {
+      _updateButtonStatus();
+      return response;
+    }
+
+    if (_formResults[_currentForm.id] == null)
+      _formResults[_currentForm.id] = List();
+    _formResults[_currentForm.id].add(currentFormResults.value);
 
     Question nextQuestion = _currentForm.questions
         .singleWhere((q) => q.id == _currentAnswer.nextQuestionId);
@@ -232,6 +253,7 @@ class DynamicFormBloc {
     repetitionIndex++;
 
     _updateButtonStatus();
+    return response;
   }
 
   /// Saves the form results from the current form. Then checks if there are
@@ -241,8 +263,8 @@ class DynamicFormBloc {
   Future<bool> finishAndSaveForm() async {
     List<DynamicForm> forms = _forms;
     bool newFormsAdded = false;
+    bool response = true;
 
-    _nextButtonStatusController.add(ButtonStatus.LOADING);
     _isBackButtonVisibleController.add(false);
 
     if (_formResults[_currentForm.id] == null)
@@ -251,12 +273,17 @@ class DynamicFormBloc {
 
     repetitionIndex = 0;
 
-    repository.uploadAnswer(
+    response = await repository.uploadAnswer(
       _currentForm.id,
       _currentQuestion.id,
       currentFormResults.value[_currentQuestion.id],
       repetitionIndex,
     );
+
+    if (response == false) {
+      _updateButtonStatus();
+      return response;
+    }
 
     repository.updateLastAnsweredQuestion(
       initialFormId: initialFormId,
@@ -309,20 +336,26 @@ class DynamicFormBloc {
       return true;
     }
 
+    repository.formFinished(_formResults);
+
+    if (response == false) {
+      _updateButtonStatus();
+      return response;
+    }
+
     // It's the last form
     repository.updateLastViewedQuestion(
       initialFormId: initialFormId,
       previousQuestion: _currentQuestion,
     );
 
-    repository.formFinished(_formResults);
     repository.registerAnalyticEvent(
       initialFormId: initialFormId,
       eventName: "lead_count",
       eventType: AnalyticEventType.INCREMENT,
     );
 
-    return false;
+    return response;
   }
 
   void _updateButtonStatus() {

@@ -40,17 +40,28 @@ abstract class DynamicFormsRepository {
   Future<DynamicForm> getFormWithId(String formId);
 
   /// Creates a document in Firestore that represents the initiation on a form
-  void formStarted() {
-    Firestore.instance
-        .collection("form_results")
-        .document(initTimestamp.toString())
-        .setData({
-      "notify_emails": initialForm.emailList,
-      "starting_form_id": initialForm.id,
-      "starting_timestamp": initTimestamp,
-      "source": source,
-      "campaign": campaign,
-    }, merge: true);
+  ///
+  /// Returns true if the accion was saved in Firestore correctly
+  /// false if the call does not execute in less than 3 seconds
+  Future<bool> formStarted() async {
+    bool response = true;
+
+    try {
+      await Firestore.instance
+          .collection("form_results")
+          .document(initTimestamp.toString())
+          .setData({
+        "notify_emails": initialForm.emailList,
+        "starting_form_id": initialForm.id,
+        "starting_timestamp": initTimestamp,
+        "source": source,
+        "campaign": campaign,
+      }, merge: true).timeout(Duration(seconds: 5));
+    } on TimeoutException {
+      response = false;
+    }
+
+    if (response == false) return response;
 
     registerAnalyticEvent(
       initialFormId: initialForm.id,
@@ -63,13 +74,19 @@ abstract class DynamicFormsRepository {
       eventName: "campaign.$campaign",
       eventType: AnalyticEventType.INCREMENT,
     );
+
+    return response;
   }
 
   /// Uploads the answer of a question [answerResults] for the form with id
   /// [formId] that a user with id [userId] answered. The [repetitionIndex] is
   /// used to know to which index insert the answer
-  void uploadAnswer(String formId, String questionId, Map answerResults,
-      int repetitionIndex) {
+  ///
+  /// Returns true if answer was correctly saved in Firestore
+  /// false if the call does not execute in less than 3 seconds
+  Future<bool> uploadAnswer(String formId, String questionId, Map answerResults,
+      int repetitionIndex) async {
+    bool response = true;
     Map answerResultsCopy = Map.from(answerResults);
 
     if (answerResultsCopy["question_purpose"] ==
@@ -93,11 +110,17 @@ abstract class DynamicFormsRepository {
       "last_answered_question": questionId,
     };
 
-    Firestore.instance
-        .collection("form_results")
-        .document(initTimestamp.toString())
-        .setData(data, merge: true)
-        .catchError((error) => print("This is an error: " + error));
+    try {
+      await Firestore.instance
+          .collection("form_results")
+          .document(initTimestamp.toString())
+          .setData(data, merge: true)
+          .timeout(Duration(seconds: 5));
+    } on TimeoutException {
+      response = false;
+    }
+
+    return response;
   }
 
   /// Signs in anonymously
@@ -109,12 +132,24 @@ abstract class DynamicFormsRepository {
   }
 
   /// Updates the value of the form results
-  void formFinished(Map<String, List<Map>> formResults) {
+  ///
+  /// Returns true if the form was correctly saved in Firestore
+  /// false if the call does not execute in less than 3 seconds
+  Future<bool> formFinished(Map<String, List<Map>> formResults) async {
+    bool response = true;
     _formResultsStreamController.add(formResults);
-    Firestore.instance
-        .collection("form_results")
-        .document(initTimestamp.toString())
-        .setData({"completed_forms": formResults.keys}, merge: true);
+
+    try {
+      await Firestore.instance
+          .collection("form_results")
+          .document(initTimestamp.toString())
+          .setData({"completed_forms": formResults.keys},
+              merge: true).timeout(Duration(seconds: 5));
+    } on TimeoutException {
+      response = false;
+    }
+
+    return response;
   }
 
   /// Function used to register Analytic Events
@@ -153,7 +188,6 @@ abstract class DynamicFormsRepository {
             doc.updateData({eventName: FieldValue.increment(1)});
             break;
           case AnalyticEventType.VALUE:
-            // TODO: Handle this case.
             break;
         }
       } else {
@@ -162,7 +196,6 @@ abstract class DynamicFormsRepository {
             doc.setData({eventName: 1});
             break;
           case AnalyticEventType.VALUE:
-            // TODO: Handle this case.
             break;
         }
       }

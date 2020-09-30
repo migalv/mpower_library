@@ -29,7 +29,6 @@ ThemeData buildMPowerTheme() {
     primaryTextTheme: _buildMPowerTextTheme(base.primaryTextTheme),
     accentTextTheme: _buildMPowerTextTheme(base.accentTextTheme),
     primaryIconTheme: base.iconTheme.copyWith(color: Colors.black54),
-    accentIconTheme: base.iconTheme.copyWith(color: Colors.black54),
     textSelectionColor: secondaryMain,
     backgroundColor: background,
     chipTheme: _buildMPowerChipTheme(),
@@ -177,7 +176,8 @@ ButtonThemeData _buildMPowerButtonTheme(ButtonThemeData base) {
 
 FloatingActionButtonThemeData _buildFABTheme() {
   return FloatingActionButtonThemeData(
-    backgroundColor: secondaryMain,
-    splashColor: secondary700,
+    foregroundColor: Colors.black87,
+    backgroundColor: Colors.indigo[400],
+    splashColor: Colors.indigo[700],
   );
 }

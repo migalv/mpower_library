@@ -7,6 +7,7 @@ import 'package:cons_calc_lib/src/widgets/question_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class DynamicFormPage extends StatefulWidget {
   @override
@@ -45,6 +46,20 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
           _buildQuestionCarousel(),
           _buildCodeVersion(_dynamicFormBloc.codeVersion),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          bool sendHelp = (await _showHelpConfirmationDialog()) ?? false;
+          if (sendHelp) {
+            bool response = _dynamicFormBloc.sendHelpSMS();
+            if (response)
+              _showConfirmationDialog();
+            else
+              _showAnswerMoreQuestionsDialog();
+          }
+        },
+        label: Text("Help"),
+        icon: Icon(MdiIcons.help),
       ),
     );
   }
@@ -220,64 +235,96 @@ class _DynamicFormPageState extends State<DynamicFormPage> {
     });
   }
 
+  void _showConfirmationDialog() => showDialog(
+        context: context,
+        child: AlertDialog(
+          title: Text(
+            "Help petition sent",
+            style: Theme.of(context)
+                .textTheme
+                .headline6
+                .copyWith(fontWeight: FontWeight.bold),
+          ),
+          content: Container(
+            width: 256.0,
+            child: Text(
+              "An MPower employee will get in contact with you as soon as possible. Please wait.",
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
+          ),
+          actions: [
+            FlatButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Dismiss"),
+            ),
+          ],
+        ),
+      );
+
+  Future<bool> _showAnswerMoreQuestionsDialog() => showDialog(
+        context: context,
+        child: AlertDialog(
+          title: Text(
+            "We need more info about you",
+            style: Theme.of(context)
+                .textTheme
+                .headline6
+                .copyWith(fontWeight: FontWeight.bold),
+          ),
+          content: Container(
+            width: 256.0,
+            child: Text(
+              "Please enter your name and phone number so an MPower employee can get in contact with you.",
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
+          ),
+          actions: [
+            FlatButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Dismiss"),
+            ),
+          ],
+        ),
+      );
+
+  Future<bool> _showHelpConfirmationDialog() async => await showDialog(
+        context: context,
+        child: AlertDialog(
+          title: Text(
+            "Do you need help?",
+            style: Theme.of(context)
+                .textTheme
+                .headline6
+                .copyWith(fontWeight: FontWeight.bold),
+          ),
+          content: Container(
+            width: 256.0,
+            child: Text(
+              "If you need help to answer this form, you can contact an MPower employee to help you.",
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
+          ),
+          actions: [
+            FlatButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text("Cancel"),
+            ),
+            RaisedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                "I Need Help",
+                style: TextStyle(
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
   @override
   void dispose() {
     _streamSubscription.cancel();
     super.dispose();
   }
 }
-
-// OLD TITLE BUILDER
-// Widget _buildTitlesScroll() => StreamBuilder<List<DynamicForm>>(
-//       stream: _dynamicFormBloc.forms,
-//       initialData: [],
-//       builder: (_, snapshotForms) => StreamBuilder<DynamicForm>(
-//         stream: _dynamicFormBloc.currentForm,
-//         builder: (_, currentFormSnapshot) {
-//           DynamicForm currentForm;
-//           List<DynamicForm> forms = snapshotForms.data;
-
-//           if (currentFormSnapshot.hasData == false ||
-//               currentFormSnapshot.hasError)
-//             return Center(child: CircularProgressIndicator());
-//           else
-//             currentForm = currentFormSnapshot.data;
-
-//           List<Widget> titles = [];
-//           int currentFormIndex = forms.indexOf(currentForm);
-
-//           for (int i = 0; i < forms.length; i++)
-//             titles.add(TitleForm(
-//               formIndex: i,
-//               currentFormIndex: currentFormIndex,
-//               title: forms[i].title,
-//             ));
-
-//           return StreamBuilder<bool>(
-//             stream: _dynamicFormBloc.isKeyboardVisible,
-//             initialData: false,
-//             builder: (_, keyboardVisibilitySnapshot) =>
-//                 keyboardVisibilitySnapshot.data == false
-//                     ? Expanded(
-//                         child: Container(
-//                           constraints: BoxConstraints(maxWidth: 480.0),
-//                           child: Column(
-//                             mainAxisAlignment: MainAxisAlignment.end,
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: titles.length > 3
-//                                 ? titles
-//                                     .getRange(
-//                                         currentFormIndex - 3 < 0
-//                                             ? 0
-//                                             : currentFormIndex - 2,
-//                                         currentFormIndex + 1)
-//                                     .toList()
-//                                 : titles,
-//                           ),
-//                         ),
-//                       )
-//                     : Container(),
-//           );
-//         },
-//       ),
-//     );

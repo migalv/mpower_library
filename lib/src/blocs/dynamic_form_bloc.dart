@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cons_calc_lib/src/dynamic_forms_repository.dart';
 import 'package:cons_calc_lib/src/models/analytic_event_type.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ class DynamicFormBloc {
   int _currentFormIndex;
   DynamicForm _currentForm;
   Question _currentQuestion;
-  Question _firstQuestion;
+  Question get _firstQuestion => repository.initialForm.questions.first;
   List<Question> _previousQuestions = [];
 
   /// Indicates if the form is being repeated. If so, it tells you on which
@@ -80,7 +81,6 @@ class DynamicFormBloc {
     _hasAnsweredFirstQuestion = false;
     repository.getFormWithId(initialFormId).then((initialForm) async {
       await repository.signInAnonymously();
-
       repository.registerAnalyticEvent(
         initialFormId: initialFormId,
         eventName: "visitor_count",
@@ -92,7 +92,6 @@ class DynamicFormBloc {
       _initialFormTitleController.add(initialForm.title);
       _formsController.add([initialForm]);
       _currentForm = initialForm;
-      _firstQuestion = initialForm.questions.first;
 
       List<Question> questions = [];
 
@@ -104,8 +103,8 @@ class DynamicFormBloc {
         questions,
         maxQuestionCards,
       ));
-
       _currentQuestion = _firstQuestion;
+
       repository.updateLastViewedQuestion(
         initialFormId: initialFormId,
         currentQuestion: _currentQuestion,
@@ -396,6 +395,35 @@ class DynamicFormBloc {
     _currentFormResultsController.add(currentFormResults.value);
 
     _updateButtonStatus();
+  }
+
+  bool sendHelpSMS() {
+    List<Map> questionsAnswers =
+        currentFormResults?.value?.values?.toList() ?? [];
+    String name;
+    String phoneNumber;
+    final HttpsCallable callable = CloudFunctions.instance.getHttpsCallable(
+      functionName: 'zambiaSMS',
+    );
+
+    for (Map questionAnswer in questionsAnswers) {
+      if (questionAnswer[Answer.KEY] == "name")
+        name = questionAnswer[Answer.VALUE];
+      else if (questionAnswer[Answer.KEY] == "phone")
+        phoneNumber = questionAnswer[Answer.VALUE];
+
+      if (name != null && phoneNumber != null) {
+        callable.call(<String, dynamic>{
+          "to_phone": "+260 97 9350022",
+          "message": "I need help to fill the $initialFormId form call me",
+          "name": name,
+          "customer_phone": phoneNumber,
+        }).then((resp) => print("SMS ERROR: ${resp.data["error"]}"));
+        return true;
+      }
+    }
+
+    return false;
   }
 
   void dispose() {

@@ -10,7 +10,8 @@ import 'package:meta/meta.dart';
 
 abstract class DynamicFormsRepository {
   DynamicForm initialForm;
-  FirebaseUser currentUser;
+  String _userId;
+  String get userId => _userId;
   final String codeVersion;
   int initTimestamp;
   final bool isDebugging;
@@ -25,7 +26,7 @@ abstract class DynamicFormsRepository {
     this.codeVersion, {
     this.isDebugging,
     this.source = "organic",
-    this.campaign,
+    this.campaign = "none",
   });
 
   Stream<Map<String, List<Map>>> get formResultsStream =>
@@ -49,13 +50,14 @@ abstract class DynamicFormsRepository {
     try {
       await Firestore.instance
           .collection("form_results")
-          .document(initTimestamp.toString())
+          .document(_userId)
           .setData({
         "notify_emails": initialForm.emailList,
         "starting_form_id": initialForm.id,
         "starting_timestamp": initTimestamp,
         "source": source,
         "campaign": campaign,
+        "user_id": _userId,
       }, merge: true).timeout(Duration(seconds: 5));
     } on TimeoutException {
       response = false;
@@ -113,7 +115,7 @@ abstract class DynamicFormsRepository {
     try {
       await Firestore.instance
           .collection("form_results")
-          .document(initTimestamp.toString())
+          .document(_userId)
           .setData(data, merge: true)
           .timeout(Duration(seconds: 5));
     } on TimeoutException {
@@ -124,11 +126,20 @@ abstract class DynamicFormsRepository {
   }
 
   /// Signs in anonymously
-  Future<void> signInAnonymously() async {
-    currentUser = await FirebaseAuth.instance.currentUser();
+  Future<String> signInAnonymously() async {
+    FirebaseUser currentUser = await FirebaseAuth.instance.currentUser();
     initTimestamp = DateTime.now().millisecondsSinceEpoch;
-    if (currentUser == null)
+
+    if (currentUser == null) {
       currentUser = (await FirebaseAuth.instance.signInAnonymously()).user;
+    }
+    _userId = currentUser.uid;
+
+    return _userId;
+  }
+
+  void setUser(String uid) {
+    if (uid != null && _userId == null) _userId = uid;
   }
 
   /// Updates the value of the form results
@@ -142,7 +153,7 @@ abstract class DynamicFormsRepository {
     try {
       await Firestore.instance
           .collection("form_results")
-          .document(initTimestamp.toString())
+          .document(_userId)
           .setData({"completed_forms": formResults.keys},
               merge: true).timeout(Duration(seconds: 5));
     } on TimeoutException {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cons_calc_lib/src/dynamic_forms_repository.dart';
@@ -13,6 +14,13 @@ class DynamicFormBloc {
   final int maxQuestionCards = 6;
   String _codeVersion;
   String get codeVersion => _codeVersion;
+
+  /// The id of the user that started the form
+  String _userId;
+
+  /// The id of the question to start from (when a user is coming back)
+  final String startFromQuestionId;
+
   bool _hasAnsweredFirstQuestion;
 
   List<DynamicForm> get _forms => _formsController.value;
@@ -76,16 +84,24 @@ class DynamicFormBloc {
   DynamicFormBloc({
     @required this.initialFormId,
     @required this.repository,
-  }) {
+    userId,
+    this.startFromQuestionId,
+  }) : _userId = userId {
     _codeVersion = repository.codeVersion;
-    _hasAnsweredFirstQuestion = false;
     repository.getFormWithId(initialFormId).then((initialForm) async {
-      await repository.signInAnonymously();
-      repository.registerAnalyticEvent(
-        initialFormId: initialFormId,
-        eventName: "visitor_count",
-        eventType: AnalyticEventType.INCREMENT,
-      );
+      // It's a new user
+      if (userId == null) {
+        _userId = await repository.signInAnonymously();
+        repository.registerAnalyticEvent(
+          initialFormId: initialFormId,
+          eventName: "visitor_count",
+          eventType: AnalyticEventType.INCREMENT,
+        );
+        _hasAnsweredFirstQuestion = false;
+      } else {
+        repository.setUser(userId);
+        _hasAnsweredFirstQuestion = true;
+      }
 
       repository.initialForm = initialForm;
       repetitionIndex = 0;
@@ -93,9 +109,17 @@ class DynamicFormBloc {
       _formsController.add([initialForm]);
       _currentForm = initialForm;
 
+      if (startFromQuestionId != null) {
+        _currentQuestion = initialForm.questions
+            .where((question) => question.id == startFromQuestionId)
+            .first;
+      } else {
+        _currentQuestion = _firstQuestion;
+      }
+
       List<Question> questions = [];
 
-      questions.add(_firstQuestion);
+      questions.add(_currentQuestion);
       for (int i = 1; i < maxQuestionCards; i++) questions.add(null);
 
       _questionStateController.add(QuestionState(
@@ -103,7 +127,6 @@ class DynamicFormBloc {
         questions,
         maxQuestionCards,
       ));
-      _currentQuestion = _firstQuestion;
 
       repository.updateLastViewedQuestion(
         initialFormId: initialFormId,
@@ -406,6 +429,9 @@ class DynamicFormBloc {
       functionName: 'zambiaSMS',
     );
 
+    String link = window.location.href +
+        "?uid=$_userId&questionId=${_currentQuestion.id}";
+
     for (Map questionAnswer in questionsAnswers) {
       if (questionAnswer[Answer.KEY] == "name")
         name = questionAnswer[Answer.VALUE];
@@ -418,7 +444,13 @@ class DynamicFormBloc {
           "message": "I need help to fill the $initialFormId form call me",
           "name": name,
           "customer_phone": phoneNumber,
-        }).then((resp) => print("SMS ERROR: ${resp.data["error"]}"));
+          "url": link,
+        }).then((resp) {
+          if (resp.data["error"] != null)
+            print("SMS ERROR: ${resp.data["error"]} ");
+          if (resp.data["response"] != null)
+            print("SMS SUCCESSFULL: ${resp.data["response"]}");
+        });
         return true;
       }
     }

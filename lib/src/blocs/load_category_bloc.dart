@@ -17,11 +17,12 @@ class LoadCategoryBloc {
 
   LoadCategoryBloc({this.category, this.localeLangCode}) {
     _isDisposed = false;
-    if (!_isDisposed) _filteredProductsController.add(category.products);
+    if (!_isDisposed)
+      _filteredProductsController.add(category.availableProducts);
   }
 
   void search(String searchTerm) {
-    List filteredProds = category.products
+    List filteredProds = category.availableProducts
         .where((prod) => prod.name[localeLangCode ?? 'en']
             .toLowerCase()
             .contains(searchTerm.toLowerCase()))
@@ -32,7 +33,7 @@ class LoadCategoryBloc {
   void startSearch(bool start) {
     if (!_isDisposed) _isSearchingController.add(start);
 
-    if (!start) _filteredProductsController.add(category.products);
+    if (!start) _filteredProductsController.add(category.availableProducts);
   }
 
   void dispose() {
